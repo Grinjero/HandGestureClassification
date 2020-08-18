@@ -1,40 +1,35 @@
-'''MobilenetV2 in PyTorch.
-
-See the paper "MobileNetV2: Inverted Residuals and Linear Bottlenecks" for more details.
-'''
 import torch
 import math
 import torch.nn as nn
 import torch.nn.functional as F
+import time
+from models.mobilenetv2 import conv_1x1x1_bn
 
-def conv_bn(inp, oup, stride):
+
+def conv_bn(inp, oup, stride, kernel_size=3, padding=(1, 1, 1)):
     return nn.Sequential(
-        nn.Conv3d(inp, oup, kernel_size=3, stride=stride, padding=[1, 1, 1], bias=False),
+        nn.Conv3d(inp, oup, kernel_size=kernel_size, stride=stride, padding=padding, bias=False),
         nn.BatchNorm3d(oup),
         nn.ReLU6(inplace=True)
     )
-
-
-def conv_1x1x1_bn(inp, oup):
-    return nn.Sequential(
-        nn.Conv3d(inp, oup, 1, 1, 0, bias=False),
-        nn.BatchNorm3d(oup),
-        nn.ReLU6(inplace=True)
-    )
-
 
 class InvertedResidual(nn.Module):
     def __init__(self, inp, oup, stride, expand_ratio, depthwise_kernel_size=3):
         super(InvertedResidual, self).__init__()
         self.stride = stride
+        self.depthwise_kernel_size = depthwise_kernel_size
 
         hidden_dim = round(inp * expand_ratio)
         self.use_res_connect = self.stride == (1, 1, 1) and inp == oup
 
+        if self.stride[0] == 1 and ((isinstance(depthwise_kernel_size, tuple) and depthwise_kernel_size[0]) == 1):
+            padding = (0, 1, 1)
+        else:
+            padding = (1, 1, 1)
         if expand_ratio == 1:
             self.conv = nn.Sequential(
                 # dw
-                nn.Conv3d(hidden_dim, hidden_dim, depthwise_kernel_size, stride, 1, groups=hidden_dim, bias=False),
+                nn.Conv3d(hidden_dim, hidden_dim, depthwise_kernel_size, stride, padding, groups=hidden_dim, bias=False),
                 nn.BatchNorm3d(hidden_dim),
                 nn.ReLU6(inplace=True),
                 # pw-linear
@@ -48,7 +43,7 @@ class InvertedResidual(nn.Module):
                 nn.BatchNorm3d(hidden_dim),
                 nn.ReLU6(inplace=True),
                 # dw
-                nn.Conv3d(hidden_dim, hidden_dim, depthwise_kernel_size, stride, 1, groups=hidden_dim, bias=False),
+                nn.Conv3d(hidden_dim, hidden_dim, depthwise_kernel_size, stride, padding, groups=hidden_dim, bias=False),
                 nn.BatchNorm3d(hidden_dim),
                 nn.ReLU6(inplace=True),
                 # pw-linear
@@ -63,33 +58,41 @@ class InvertedResidual(nn.Module):
             return self.conv(x)
 
 
-class MobileNetV2(nn.Module):
-    def __init__(self, num_classes=1000, sample_size=224, width_mult=1.):
-        super(MobileNetV2, self).__init__()
+
+class FastMobileNetV2(nn.Module):
+    """
+    In comparison to standard MobileNetV2 this network has has much larger temporal resolution (i.e. it receives a much
+    larger number of frames that are much closer to each other in time than in SlowMobileNetV2), but it also should have
+    a much smaller number of channels (width_mult = 0.2 by default).
+    Hopefully, this would force the network to only focus on temporal changes and not on details of each frame separately
+    (pure spatial information)
+    """
+    def __init__(self, num_classes=1000, sample_size=112, width_mult=0.2):
+        super(FastMobileNetV2, self).__init__()
         block = InvertedResidual
         input_channel = 32
         last_channel = 1280
         interverted_residual_setting = [
             # t, c, n, s
-            [1,  16, 1, (1,1,1)],
-            [6,  24, 2, (2,2,2)],
-            [6,  32, 3, (2,2,2)],
-            [6,  64, 4, (2,2,2)],
-            [6,  96, 3, (1,1,1)],
-            [6, 160, 3, (2,2,2)],
-            [6, 320, 1, (1,1,1)],
+            [1, 16, 1, (1, 1, 1)],
+            [6, 24, 2, (1, 2, 2)],
+            [6, 32, 3, (1, 2, 2)],
+            [6, 64, 4, (1, 2, 2)],
+            [6, 96, 3, (1, 1, 1)],
+            [6, 160, 3, (1, 2, 2)],
+            [6, 320, 1, (1, 1, 1)],
         ]
 
         # building first layer
         assert sample_size % 16 == 0.
         input_channel = int(input_channel * width_mult)
         self.last_channel = int(last_channel * width_mult) if width_mult > 1.0 else last_channel
-        self.features = [conv_bn(3, input_channel, (1,2,2))]
+        self.features = [conv_bn(3, input_channel, (1, 2, 2))]
         # building inverted residual blocks
         for t, c, n, s in interverted_residual_setting:
             output_channel = int(c * width_mult)
             for i in range(n):
-                stride = s if i == 0 else (1,1,1)
+                stride = s if i == 0 else (1, 1, 1)
                 self.features.append(block(input_channel, output_channel, stride, expand_ratio=t))
                 input_channel = output_channel
         # building last several layers
@@ -107,6 +110,10 @@ class MobileNetV2(nn.Module):
 
     def forward(self, x):
         x = self.features(x)
+        # for layer in self.features:
+        #     x = layer(x)
+        #     print("Layer {} output size: {}".format(layer, x.size()))
+        print("Pre avg pool shape: {}".format(x.size()))
         x = F.avg_pool3d(x, x.data.size()[-3:])
         x = x.view(x.size(0), -1)
         x = self.classifier(x)
@@ -149,23 +156,28 @@ def get_fine_tuning_parameters(model, ft_portion):
     else:
         raise ValueError("Unsupported ft_portion: 'complete' or 'last_layer' expected")
 
-    
+
 def get_model(**kwargs):
     """
     Returns the model.
     """
-    model = MobileNetV2(**kwargs)
+    model = FastMobileNetV2(**kwargs)
     return model
 
 
 if __name__ == "__main__":
-    model = get_model(num_classes=600, sample_size=112, width_mult=1.)
+    model = get_model(num_classes=27, sample_size=112, width_mult=0.2)
     model = model.cuda()
-    print(model)
+    model.eval()
+    print(str(model) + "\n\n\n")
+    # BATCH X CHANNELS X NUM_FRAMES X W X H
+    input_var = torch.randn(1, 3, 16, 112, 112).cuda()
 
+    time_start = time.perf_counter()
+    with torch.no_grad():
+        output = model(input_var)
 
-    input_var = torch.randn(8, 3, 16, 112, 112).cuda()
-    output = model(input_var)
-    print(output.shape)
-
+    duration = time.perf_counter() - time_start
+    print("\n\nOutput shape " + str(output.shape) + "\n\n")
+    print("Duration {}".format(duration))
 

@@ -71,6 +71,9 @@ if __name__ == '__main__':
         elif opt.train_crop == 'center':
             crop_method = MultiScaleCornerCrop(
                 opt.scales, opt.sample_size, crop_positions=['c'])
+        else:
+            raise ValueError("Train crop not provided")
+
         spatial_transform = Compose([
             RandomHorizontalFlip(),
             #RandomRotate(),
@@ -188,9 +191,9 @@ if __name__ == '__main__':
                                  target_transform)
         test_loader = torch.utils.data.DataLoader(
             test_data,
-            batch_size=16,
+            batch_size=1,
             shuffle=False,
-            num_workers=opt.n_threads,
+            num_workers=0,
             pin_memory=True)
         test.test(test_loader, model, opt, test_data.class_names)
 

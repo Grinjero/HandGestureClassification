@@ -131,6 +131,9 @@ def generate_model(opt):
             assert opt.arch == pretrain['arch']
             model.load_state_dict(pretrain['state_dict'])
 
+            if opt.inference:
+                return model, []
+
             if opt.model in  ['mobilenet', 'mobilenetv2', 'shufflenet', 'shufflenetv2']:
                 model.module.classifier = nn.Sequential(
                                 nn.Dropout(0.9),
