@@ -1,8 +1,8 @@
 
 python main.py --root_path ~/ \
-	--video_path ~/datasets/jester \
-	--annotation_path Efficient-3DCNNs/annotation_Jester/jester.json \
-	--result_path Efficient-3DCNNs/results \
+	--video_path "D:/FilipFaks/datasets/jester/" \
+	--annotation_path "D:/FilipFaks/DiplomskiRad/Efficient-3DCNNs/annotation_Jester/jester.json" \
+	--result_path "D:/FilipFaks/DiplomskiRad/Efficient-3DCNNs/results" \
 	--dataset jester \
 	--n_classes 27 \
 	--model mobilenet \
@@ -13,7 +13,7 @@ python main.py --root_path ~/ \
 	--sample_duration 16 \
 	--downsample 2 \
 	--batch_size 16 \
-	--n_threads 16 \
+	--n_threads 4 \
 	--checkpoint 1 \
 	--n_val_samples 1 \
 	# --no_train \

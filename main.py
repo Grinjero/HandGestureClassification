@@ -5,6 +5,7 @@ import numpy as np
 import torch
 from torch import nn
 from torch import optim
+from torch.utils.tensorboard import SummaryWriter
 from torch.optim import lr_scheduler
 
 from opts import parse_opts
@@ -61,6 +62,9 @@ if __name__ == '__main__':
         norm_method = Normalize(opt.mean, [1, 1, 1])
     else:
         norm_method = Normalize(opt.mean, opt.std)
+
+    logger = TensorboardLogger()
+
 
     if not opt.no_train:
         assert opt.train_crop in ['random', 'corner', 'center']
@@ -133,6 +137,7 @@ if __name__ == '__main__':
             shuffle=False,
             num_workers=opt.n_threads,
             pin_memory=True)
+
         val_logger = Logger(
             os.path.join(opt.result_path, 'val.log'), ['epoch', 'loss', 'prec1', 'prec5'])
 
@@ -152,7 +157,7 @@ if __name__ == '__main__':
         if not opt.no_train:
             adjust_learning_rate(optimizer, i, opt)
             train_epoch(i, train_loader, model, criterion, optimizer, opt,
-                        train_logger, train_batch_logger)
+                        train_logger, train_batch_logger, logger)
             state = {
                 'epoch': i,
                 'arch': opt.arch,
@@ -164,7 +169,7 @@ if __name__ == '__main__':
             
         if not opt.no_val:
             validation_loss, prec1 = val_epoch(i, val_loader, model, criterion, opt,
-                                        val_logger)
+                                        val_logger, logger)
             is_best = prec1 > best_prec1
             best_prec1 = max(prec1, best_prec1)
             state = {

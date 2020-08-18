@@ -38,8 +38,8 @@ class Compose(object):
 
 
 class ToTensor(object):
-    """Convert a ``PIL.Image`` or ``numpy.ndarray`` to tensor.
-    Converts a PIL.Image or numpy.ndarray (H x W x C) in the range
+    """Convert a `cv2 Image`` or ``numpy.ndarray`` to tensor.
+    Converts a cv2 Image or numpy.ndarray (H x W x C) in the range
     [0, 255] to a torch.FloatTensor of shape (C x H x W) in the range [0.0, 1.0].
     """
 
@@ -103,7 +103,7 @@ class Normalize(object):
             respecitvely.
     """
 
-    def __init__(self, mean, std):
+    def __init__(self, mean=(0, 0, 0), std=(1, 1, 1)):
         self.mean = mean
         self.std = std
 
@@ -124,18 +124,18 @@ class Normalize(object):
 
 
 class Scale(object):
-    """Rescale the input PIL.Image to the given size.
+    """Rescale the input Image H x W x C to the given size.
     Args:
-        size (sequence or int): Desired output size. If size is a sequence like
+        size (tuple or int): Desired output size. If size is a tuple like
             (w, h), output size will be matched to this. If size is an int,
             smaller edge of the image will be matched to this number.
             i.e, if height > width, then image will be rescaled to
             (size * height / width, size)
         interpolation (int, optional): Desired interpolation. Default is
-            ``PIL.Image.BILINEAR``
+            ``cv2.INTER_LINEAR``
     """
 
-    def __init__(self, size, interpolation=Image.BILINEAR):
+    def __init__(self, size, interpolation=cv2.INTER_LINEAR):
         assert isinstance(size,
                           int) or (isinstance(size, collections.Iterable) and
                                    len(size) == 2)
@@ -145,33 +145,33 @@ class Scale(object):
     def __call__(self, img):
         """
         Args:
-            img (PIL.Image): Image to be scaled.
+            img: nparray
         Returns:
             PIL.Image: Rescaled image.
         """
         if isinstance(self.size, int):
-            w, h = img.size
+            h, w, c = img.shape
             if (w <= h and w == self.size) or (h <= w and h == self.size):
                 return img
             if w < h:
                 ow = self.size
                 oh = int(self.size * h / w)
-                return img.resize((ow, oh), self.interpolation)
+                return cv2.resize(img, (ow, oh), interpolation=self.interpolation)
             else:
                 oh = self.size
                 ow = int(self.size * w / h)
-                return img.resize((ow, oh), self.interpolation)
+                return cv2.resize(img, (ow, oh), interpolation=self.interpolation)
         else:
-            return img.resize(self.size, self.interpolation)
+            return cv2.resize(img, self.size, self.interpolation)
 
     def randomize_parameters(self):
         pass
 
 
 class CenterCrop(object):
-    """Crops the given PIL.Image at the center.
+    """Crops the given Image H x W x C at the center.
     Args:
-        size (sequence or int): Desired output size of the crop. If size is an
+        size (TUPLE or int): Desired output size of the crop. If size is an
             int instead of sequence like (h, w), a square crop (size, size) is
             made.
     """
@@ -185,15 +185,15 @@ class CenterCrop(object):
     def __call__(self, img):
         """
         Args:
-            img (PIL.Image): Image to be cropped.
+            img : Image W x H x C to be cropped .
         Returns:
-            PIL.Image: Cropped image.
+            Cropped image.
         """
-        w, h = img.size
+        w, h, c = img.shape
         th, tw = self.size
         x1 = int(round((w - tw) / 2.))
         y1 = int(round((h - th) / 2.))
-        return img.crop((x1, y1, x1 + tw, y1 + th))
+        return img[x1:x1 + tw, y1:y1 + th, :]
 
     def randomize_parameters(self):
         pass

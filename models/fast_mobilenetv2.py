@@ -113,7 +113,6 @@ class FastMobileNetV2(nn.Module):
         # for layer in self.features:
         #     x = layer(x)
         #     print("Layer {} output size: {}".format(layer, x.size()))
-        print("Pre avg pool shape: {}".format(x.size()))
         x = F.avg_pool3d(x, x.data.size()[-3:])
         x = x.view(x.size(0), -1)
         x = self.classifier(x)

@@ -255,8 +255,3 @@ com_crashlytics_export_strings.xml
 crashlytics.properties
 crashlytics-build.properties
 fabric.properties
-
-# too large for git
-sample_videos/
-model_params/
-

@@ -1,0 +1,16 @@
+python main.py --root_path "D:\FilipFaks\DiplomskiRad\Efficient-3DCNNs" \
+	--video_path "D:\MachineLearning\Datasets\nvGesture\Image_data" \
+	--annotation_path "D:\FilipFaks\DiplomskiRad\Efficient-3DCNNs\annotation_nvGesture\nvall.json" \
+	--result_path "results\mobilenet" \
+	--dataset nvgesture \
+	--n_classes 27 \
+	--model mobilenet \
+	--width_mult 1 \
+	--train_crop random \
+	--sample_duration 16 \
+	--downsample 2 \
+	--batch_size 16 \
+	--n_threads 16 \
+	--no_train \
+	--no_val \
+	--test

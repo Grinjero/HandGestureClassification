@@ -4,7 +4,7 @@ import time
 import os
 from torch import Tensor
 
-from spatial_transforms import *
+from spatial_transforms_cv2 import *
 from online.online_classifier import OnlineClassifier
 from online.online_utils import FPSMeasurer, ImageStreamer
 from visualization.stream_utils import *

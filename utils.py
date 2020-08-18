@@ -2,7 +2,7 @@ import csv
 import torch
 import shutil
 import numpy as np
-
+from torch.utils.tensorboard import SummaryWriter
 
 
 class AverageMeter(object):
@@ -23,6 +23,18 @@ class AverageMeter(object):
         self.count += n
         self.avg = self.sum / self.count
 
+
+class TensorboardLogger:
+    def __init__(self):
+        self.writer = SummaryWriter()
+
+    def log_iteration(self, values, iteration, subset="train"):
+        for key in values.keys():
+            self.writer.add_scalar("{}/{}".format(subset, key), values[key], global_step=iteration)
+
+    def log_epoch(self, values, epoch, subset="train"):
+        for key in values.keys():
+            self.writer.add_scalar("{}/batch/{}".format(subset, key), values[key], global_step=epoch)
 
 class Logger(object):
 
