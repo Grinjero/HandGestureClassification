@@ -15,8 +15,9 @@ from utils import load_value_file
 """
 set the VOLUME_SPLITS to indicate where each volume starts (vol_0=[0, VOLUME_SPLITS[0] - 1], 
 vol_1=[VOLUME_SPLITS[0], [VOLUME_SPLITS[1] - 1], ..., [VOLUME_SPLITS[-1], end_of_dataset]
+This could appease collab
 """
-VOLUME_SPLITS = [70000]
+VOLUME_SPLITS = [20000, 40000, 60000, 80000, 100000, 120000]
 
 def pil_loader(path):
     # open path as file to avoid ResourceWarning (https://github.com/python-pillow/Pillow/issues/835)
