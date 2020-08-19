@@ -12,6 +12,11 @@ import random
 
 from utils import load_value_file
 
+"""
+set the VOLUME_SPLITS to indicate where each volume starts (vol_0=[0, VOLUME_SPLITS[0] - 1], 
+vol_1=[VOLUME_SPLITS[0], [VOLUME_SPLITS[1] - 1], ..., [VOLUME_SPLITS[-1], end_of_dataset]
+"""
+VOLUME_SPLITS = [70000]
 
 def pil_loader(path):
     # open path as file to avoid ResourceWarning (https://github.com/python-pillow/Pillow/issues/835)
@@ -68,7 +73,7 @@ def get_class_labels(data):
     return class_labels_map
 
 
-def get_video_names_and_annotations(data, subset):
+def get_video_names_and_annotations(data, subset, is_volumed=False):
     video_names = []
     annotations = []
 
@@ -77,6 +82,18 @@ def get_video_names_and_annotations(data, subset):
         if this_subset == subset:
             label = value['annotations']['label']
             #video_names.append('{}/{}'.format(label, key))
+
+            if is_volumed:
+                video_name_index = int(key)
+
+                if video_name_index > VOLUME_SPLITS[-1]:
+                    key = "vol_{}/{}".format((len(VOLUME_SPLITS) - 1), key)
+                else:
+                    for split_idx in range(len(VOLUME_SPLITS)):
+                        if video_name_index < VOLUME_SPLITS[split_idx]:
+                            key = "vol_{}/{}".format((len(VOLUME_SPLITS) - 1), key)
+                            break
+
             video_names.append(key)
             annotations.append(value['annotations'])
 
@@ -86,7 +103,9 @@ def get_video_names_and_annotations(data, subset):
 def make_dataset(root_path, annotation_path, subset, n_samples_for_each_video,
                  sample_duration):
     data = load_annotation_data(annotation_path)
-    video_names, annotations = get_video_names_and_annotations(data, subset)
+    # check if the subdirectory of the dataset is split into volumes
+    is_volumed = len(os.listdir(root_path)) <= (len(VOLUME_SPLITS) + 1)
+    video_names, annotations = get_video_names_and_annotations(data, subset, is_volumed)
     class_to_idx = get_class_labels(data)
     idx_to_class = {}
     for name, label in class_to_idx.items():
