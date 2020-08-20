@@ -7,6 +7,7 @@ from torch import nn
 from torch import optim
 from torch.utils.tensorboard import SummaryWriter
 from torch.optim import lr_scheduler
+from pathlib import Path
 
 from opts import parse_opts
 from model import generate_model
@@ -38,12 +39,19 @@ if __name__ == '__main__':
     opt.scales = [opt.initial_scale]
     for i in range(1, opt.n_scales):
         opt.scales.append(opt.scales[-1] * opt.scale_step)
+
     opt.arch = '{}'.format(opt.model)
     opt.mean = get_mean(opt.norm_value, dataset=opt.mean_dataset)
     opt.std = get_std(opt.norm_value)
     opt.store_name = '_'.join([opt.dataset, opt.model, str(opt.width_mult) + 'x',
                                opt.modality, str(opt.sample_duration)])
     print(opt)
+
+    # create results folder
+    result_path = Path(opt.result_path)
+    if not result_path.exists():
+        result_path.mkdir(parents=True, exist_ok=True)
+        print("Created the results directory: " + str(result_path))
     with open(os.path.join(opt.result_path, 'opts.json'), 'w') as opt_file:
         json.dump(vars(opt), opt_file)
 
