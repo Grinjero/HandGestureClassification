@@ -136,6 +136,8 @@ def generate_model(opt):
         model = nn.DataParallel(model, device_ids=None)
         pytorch_total_params = sum(p.numel() for p in model.parameters() if
                                p.requires_grad)
+        assert torch.cuda.is_available()
+        print("Using GPU {}".format(torch.cuda.get_device_name(0)))
         print("Total number of trainable parameters: ", pytorch_total_params)
 
         if opt.pretrain_path:
