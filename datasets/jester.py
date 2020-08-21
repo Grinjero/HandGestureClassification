@@ -10,7 +10,7 @@ from numpy.random import randint
 import numpy as np
 import random
 
-from utils import load_value_file
+from utils.utils import load_value_file
 
 """
 set the VOLUME_SPLITS to indicate where each volume starts (vol_0=[0, VOLUME_SPLITS[0] - 1], 

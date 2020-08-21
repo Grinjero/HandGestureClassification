@@ -51,10 +51,10 @@ def convert_jester_csv_to_activitynet_json(label_csv_path, train_csv_path,
 if __name__ == '__main__':
     csv_dir_path = sys.argv[1]
 
-    label_csv_path = os.path.join(csv_dir_path, 'classInd.txt')
-    train_csv_path = os.path.join(csv_dir_path, 'trainlist.txt')
-    val_csv_path = os.path.join(csv_dir_path, 'vallist.txt')
-    dst_json_path = os.path.join(csv_dir_path, 'jester.json')
+    label_csv_path = os.path.join(csv_dir_path, 'classInd_17_classes.txt')
+    train_csv_path = os.path.join(csv_dir_path, 'trainlist_17_classes.txt')
+    val_csv_path = os.path.join(csv_dir_path, 'vallist_17_classes.txt')
+    dst_json_path = os.path.join(csv_dir_path, 'jester_17_classes.json')
     
     convert_jester_csv_to_activitynet_json(label_csv_path, train_csv_path,
                                                val_csv_path, dst_json_path)

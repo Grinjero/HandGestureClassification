@@ -4,7 +4,7 @@ import time
 import os
 import sys
 
-from utils import *
+from utils.utils import *
 
 
 def train_epoch(epoch, data_loader, model, criterion, optimizer, opt,

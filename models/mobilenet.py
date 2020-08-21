@@ -111,6 +111,6 @@ if __name__ == '__main__':
     model = nn.DataParallel(model, device_ids=None)
     print(model)
 
-    input_var = Variable(torch.randn(8, 3, 16, 112, 112))
+    input_var = torch.randn(8, 3, 16, 112, 112)
     output = model(input_var)
     print(output.shape)

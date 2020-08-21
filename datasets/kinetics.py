@@ -11,8 +11,6 @@ import numpy as np
 import random
 import cv2
 
-from utils import load_value_file
-
 
 def pil_loader(path):
     # open path as file to avoid ResourceWarning (https://github.com/python-pillow/Pillow/issues/835)

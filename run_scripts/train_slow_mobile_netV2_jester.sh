@@ -10,4 +10,6 @@ python main.py --root_path "" \
 	--sample_duration 16 \
 	--downsample 2 \
 	--batch_size 1 \
-	--n_threads 1
+	--n_threads 1 \
+	--n_val_samples 1 \
+	--checkpoint 1
