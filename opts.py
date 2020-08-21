@@ -68,6 +68,8 @@ def parse_opts():
     parser.add_argument('--width_mult', default=1.0, type=float, help='The applied width multiplier to scale number of filters')
     parser.add_argument('--manual_seed', default=1, type=int, help='Manually set random seed')
 
+    parser.add_argument('--inference', action='store_true', help="Set true for inference and evaluation", default=False)
+
     args = parser.parse_args()
 
     return args

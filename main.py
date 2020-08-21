@@ -86,18 +86,33 @@ if __name__ == '__main__':
         else:
             raise ValueError("Train crop not provided")
 
-        spatial_transform = Compose([
-            RandomHorizontalFlip(),
-            #RandomRotate(),
-            #RandomResize(),
-            crop_method,
-            #MultiplyValues(),
-            #Dropout(),
-            #SaltImage(),
-            #Gaussian_blur(),
-            #SpatialElasticDisplacement(),
-            ToTensor(opt.norm_value), norm_method
-        ])
+        if opt.no_hflip or opt.dataset.lower() == "jester":
+            # in the jester dataset there a lot of gestures that depend on the direction they are performed in
+            spatial_transform = Compose([
+                # RandomRotate(),
+                # RandomResize(),
+                crop_method,
+                # MultiplyValues(),
+                # Dropout(),
+                # SaltImage(),
+                # Gaussian_blur(),
+                # SpatialElasticDisplacement(),
+                ToTensor(opt.norm_value), norm_method
+            ])
+        else:
+            spatial_transform = Compose([
+                RandomHorizontalFlip(),
+                # RandomRotate(),
+                # RandomResize(),
+                crop_method,
+                # MultiplyValues(),
+                # Dropout(),
+                # SaltImage(),
+                # Gaussian_blur(),
+                # SpatialElasticDisplacement(),
+                ToTensor(opt.norm_value), norm_method
+            ])
+
         temporal_transform = TemporalRandomCrop(opt.sample_duration, opt.downsample)
         target_transform = ClassLabel()
         training_data = get_training_set(opt, spatial_transform,
