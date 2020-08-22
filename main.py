@@ -71,8 +71,7 @@ if __name__ == '__main__':
     else:
         norm_method = Normalize(opt.mean, opt.std)
 
-    logger = TensorboardLogger()
-
+    logger = TensorboardLogger(opt.result_path)
 
     if not opt.no_train:
         assert opt.train_crop in ['random', 'corner', 'center']
@@ -179,8 +178,7 @@ if __name__ == '__main__':
 
         if not opt.no_train:
             adjust_learning_rate(optimizer, i, opt)
-            train_epoch(i, train_loader, model, criterion, optimizer, opt,
-                        train_logger, train_batch_logger, logger)
+            train_epoch(i, train_loader, model, criterion, optimizer, opt, logger)
             state = {
                 'epoch': i,
                 'arch': opt.arch,
@@ -191,8 +189,7 @@ if __name__ == '__main__':
             save_checkpoint(state, False, opt)
             
         if not opt.no_val:
-            validation_loss, prec1 = val_epoch(i, val_loader, model, criterion, opt,
-                                        val_logger, logger)
+            validation_loss, prec1 = val_epoch(i, val_loader, model, criterion, opt, logger)
             is_best = prec1 > best_prec1
             best_prec1 = max(prec1, best_prec1)
             state = {

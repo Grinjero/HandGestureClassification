@@ -7,8 +7,7 @@ import sys
 from utils.utils import *
 
 
-def train_epoch(epoch, data_loader, model, criterion, optimizer, opt,
-                epoch_logger, batch_logger, logger: TensorboardLogger):
+def train_epoch(epoch, data_loader, model, criterion, optimizer, opt, logger: TensorboardLogger):
     print('train at epoch {}'.format(epoch))
 
     model.train()
@@ -44,7 +43,7 @@ def train_epoch(epoch, data_loader, model, criterion, optimizer, opt,
 
         iteration = (epoch - 1) * len(data_loader) + (i + 1)
 
-        if i % 10 == 0:
+        if i % 50 == 0:
             logger.log_iteration({
                 'epoch': epoch,
                 'batch': i + 1,
@@ -53,15 +52,6 @@ def train_epoch(epoch, data_loader, model, criterion, optimizer, opt,
                 'prec5': top5.val.item(),
                 'lr': optimizer.param_groups[0]['lr']
             }, iteration, "train")
-            batch_logger.log({
-                'epoch': epoch,
-                'batch': i + 1,
-                'iter': (epoch - 1) * len(data_loader) + (i + 1),
-                'loss': losses.val.item(),
-                'prec1': top1.val.item(),
-                'prec5': top5.val.item(),
-                'lr': optimizer.param_groups[0]['lr']
-            })
 
             print('Epoch: [{0}][{1}/{2}]\t lr: {lr:.5f}\t'
                   'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
@@ -79,13 +69,11 @@ def train_epoch(epoch, data_loader, model, criterion, optimizer, opt,
                 top5=top5,
                 lr=optimizer.param_groups[0]['lr']))
 
-    epoch_logger.log({
-        'epoch': epoch,
+    logger.log_epoch({
         'loss': losses.avg.item(),
         'prec1': top1.avg.item(),
-        'prec5': top5.avg.item(),
-        'lr': optimizer.param_groups[0]['lr']
-    })
+        'prec5': top5.avg.item()
+    }, epoch, "train")
 
     # if epoch % opt.checkpoint == 0:
     #    save_file_path = os.path.join(opt.result_path,

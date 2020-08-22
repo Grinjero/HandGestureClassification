@@ -6,7 +6,7 @@ import sys
 from utils.utils import *
 
 
-def val_epoch(epoch, data_loader, model, criterion, opt, logger, tensorboard_logger: TensorboardLogger):
+def val_epoch(epoch, data_loader, model, criterion, opt, tensorboard_logger: TensorboardLogger):
     print('validation at epoch {}'.format(epoch))
 
     model.eval()
@@ -52,14 +52,10 @@ def val_epoch(epoch, data_loader, model, criterion, opt, logger, tensorboard_log
                   top1=top1,
                   top5=top5))
 
-    logger.log({'epoch': epoch,
-                'loss': losses.avg.item(),
-                'prec1': top1.avg.item(),
-                'prec5': top5.avg.item()})
     tensorboard_logger.log_epoch({
         'loss': losses.avg.item(),
         'prec1': top1.avg.item(),
         'prec5': top5.avg.item()
-    }, epoch)
+    }, epoch, "val")
 
     return losses.avg.item(), top1.avg.item()

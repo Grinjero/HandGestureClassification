@@ -25,14 +25,14 @@ class AverageMeter(object):
 
 
 class TensorboardLogger:
-    def __init__(self):
-        self.writer = SummaryWriter()
+    def __init__(self, output_dir):
+        self.writer = SummaryWriter(output_dir)
 
     def log_iteration(self, values, iteration, subset="train"):
         for key in values.keys():
             self.writer.add_scalar("{}/{}".format(subset, key), values[key], global_step=iteration)
 
-    def log_epoch(self, values, epoch, subset="train"):
+    def log_epoch(self, values, epoch, subset):
         for key in values.keys():
             self.writer.add_scalar("{}/batch/{}".format(subset, key), values[key], global_step=epoch)
 
