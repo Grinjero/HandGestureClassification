@@ -88,7 +88,7 @@ def get_video_names_and_annotations(data, subset, is_volumed=False):
                 video_name_index = int(key)
 
                 if video_name_index > VOLUME_SPLITS[-1]:
-                    key = "vol_{}/{}".format((len(VOLUME_SPLITS) - 1), key)
+                    key = "vol_{}/{}".format((len(VOLUME_SPLITS)), key)
                 else:
                     for split_idx in range(len(VOLUME_SPLITS)):
                         if video_name_index < VOLUME_SPLITS[split_idx]:
