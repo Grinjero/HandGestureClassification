@@ -1,5 +1,18 @@
 import argparse
 
+def parse_scheduler_opts(parser:argparse.ArgumentParser):
+    scheduler_subparsers = parser.add_subparsers(title="Scheduler Type", dest="scheduler", description="Which scheduler to use (MultiStepLR | ReduceLROnPlateau)")
+
+    plateau_subparser = scheduler_subparsers.add_parser('ReduceLROnPlateau')
+    plateau_subparser.add_argument('--lr_patience', type=int, default=10, required=False)
+    plateau_subparser.add_argument('--lr_factor', type=float, default=0.1, required=False)
+
+    multistep_subparser = scheduler_subparsers.add_parser('MultiStepLR')
+    multistep_subparser.add_argument('--lr_steps', default=[30, 45], type=int, nargs="+", metavar='LRSteps', help='epochs to decay learning rate by lr_factor')
+    multistep_subparser.add_argument('--lr_factor', type=float, default=0.1, required=False)
+
+
+# def parse_model_hyper_parameters(parser:argparse.ArgumentParser):
 
 def parse_opts():
     parser = argparse.ArgumentParser()
@@ -19,8 +32,6 @@ def parse_opts():
     parser.add_argument('--n_scales', default=5, type=int, help='Number of scales for multiscale cropping')
     parser.add_argument('--scale_step', default=0.84089641525, type=float, help='Scale step for multiscale cropping')
     parser.add_argument('--train_crop', default='corner', type=str, help='Spatial cropping method in training. random is uniform. corner is selection from 4 corners and 1 center.  (random | corner | center)')
-    parser.add_argument('--learning_rate', default=0.04, type=float, help='Initial learning rate (divided by 10 while training by lr scheduler)')
-    parser.add_argument('--lr_steps', default=[40, 55, 65, 70, 200, 250], type=float, nargs="+", metavar='LRSteps', help='epochs to decay learning rate by 10')
     parser.add_argument('--momentum', default=0.9, type=float, help='Momentum')
     parser.add_argument('--dampening', default=0.9, type=float, help='dampening of SGD')
     parser.add_argument('--weight_decay', default=1e-3, type=float, help='Weight Decay')
@@ -32,7 +43,7 @@ def parse_opts():
     parser.add_argument('--nesterov', action='store_true', help='Nesterov momentum')
     parser.set_defaults(nesterov=False)
     parser.add_argument('--optimizer', default='sgd', type=str, help='Currently only support SGD')
-    parser.add_argument('--lr_patience', default=10, type=int, help='Patience of LR scheduler. See documentation of ReduceLROnPlateau.')
+    parser.add_argument('--learning_rate', default=0.1, type=float, help='Initial learning rate')
     parser.add_argument('--batch_size', default=128, type=int, help='Batch Size')
     parser.add_argument('--n_epochs', default=250, type=int, help='Number of total epochs to run')
     parser.add_argument('--begin_epoch', default=1, type=int, help='Training begins at this epoch. Previous trained model indicated by resume_path is loaded.')
@@ -70,6 +81,7 @@ def parse_opts():
 
     parser.add_argument('--inference', action='store_true', help="Set true for inference and evaluation", default=False)
 
+    parse_scheduler_opts(parser)
     args = parser.parse_args()
 
     return args

@@ -140,8 +140,8 @@ if __name__ == '__main__':
             dampening=dampening,
             weight_decay=opt.weight_decay,
             nesterov=opt.nesterov)
-        scheduler = lr_scheduler.ReduceLROnPlateau(
-            optimizer, 'min', patience=opt.lr_patience)
+
+        scheduler = Scheduler(optimizer, opt, last_epoch=opt.begin_epoch)
     if not opt.no_val:
         spatial_transform = Compose([
             Scale(opt.sample_size),
@@ -177,7 +177,7 @@ if __name__ == '__main__':
     for i in range(opt.begin_epoch, opt.n_epochs + 1):
 
         if not opt.no_train:
-            adjust_learning_rate(optimizer, i, opt)
+            scheduler.adjust_epoch_begin(epoch=i)
             train_epoch(i, train_loader, model, criterion, optimizer, opt, logger)
             state = {
                 'epoch': i,
@@ -200,6 +200,8 @@ if __name__ == '__main__':
                 'best_prec1': best_prec1
                 }
             save_checkpoint(state, is_best, opt)
+
+            scheduler.adjust_epoch_end(epoch=i, val_loss=validation_loss)
 
 
     if opt.test:

@@ -7,6 +7,8 @@ import math
 import torch.nn as nn
 import torch.nn.functional as F
 
+import argparse
+
 def conv_bn(inp, oup, stride):
     return nn.Sequential(
         nn.Conv3d(inp, oup, kernel_size=3, stride=stride, padding=[1, 1, 1], bias=False),
@@ -149,7 +151,7 @@ def get_fine_tuning_parameters(model, ft_portion):
     else:
         raise ValueError("Unsupported ft_portion: 'complete' or 'last_layer' expected")
 
-    
+
 def get_model(**kwargs):
     """
     Returns the model.

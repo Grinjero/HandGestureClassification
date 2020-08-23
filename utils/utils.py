@@ -3,6 +3,7 @@ import torch
 import shutil
 import numpy as np
 from torch.utils.tensorboard import SummaryWriter
+from torch.optim.lr_scheduler import ReduceLROnPlateau, MultiStepLR
 
 
 class AverageMeter(object):
@@ -35,6 +36,24 @@ class TensorboardLogger:
     def log_epoch(self, values, epoch, subset):
         for key in values.keys():
             self.writer.add_scalar("{}/batch/{}".format(subset, key), values[key], global_step=epoch)
+
+class Scheduler:
+    def __init__(self, optimizer, opts, last_epoch=-1):
+        if opts.scheduler == "MultiStepLR":
+            self.scheduler = MultiStepLR(optimizer, milestones=opts.lr_steps, last_epoch=last_epoch, gamma=opts.lr_factor)
+        elif opts.scheduler == "ReduceLROnPlateau":
+            self.scheduler = ReduceLROnPlateau(optimizer, factor=opts.lr_factor, patience=opts.lr_patience)
+        else:
+            raise ValueError("Scheduler type {} not supported".format(opts.scheduler))
+        self.scheduler_type = opts.scheduler
+
+    def adjust_epoch_begin(self, epoch):
+        if self.scheduler_type == "MultiStepLR":
+            self.scheduler.step(epoch=epoch)
+
+    def adjust_epoch_end(self, epoch, val_loss):
+        if self.scheduler_type == "ReduceLROnPlateau":
+            self.scheduler.step(val_loss, epoch=epoch)
 
 class Logger(object):
 
