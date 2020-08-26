@@ -5,7 +5,7 @@ from glob import glob
 
 
 def parse_scheduler_opts(parser:argparse.ArgumentParser):
-    parser.add_argument("--scheduler", type=str, choices=["MultiStepLR", "ReduceLROnPlateau"], help="Which scheduler to use (MultiStepLR | ReduceLROnPlateau)")
+    parser.add_argument("--scheduler", type=str, choices=["MultiStepLR", "ReduceLROnPlateau"], help="Which scheduler to use (MultiStepLR | ReduceLROnPlateau)", required=True)
 
     parser.add_argument('--lr_patience', type=int, default=10, required=False, help='How many epochs without improving till learning rate is decayed with lr_factor. Usedy by ReduceLROnPlateau')
     parser.add_argument('--lr_steps', default=[30, 45], type=int, nargs="+", metavar='LRSteps', help='Epochs to decay learning rate by lr_factor when using MultiStepLR')
