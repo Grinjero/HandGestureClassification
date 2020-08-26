@@ -11,14 +11,16 @@ def parse_scheduler_opts(parser:argparse.ArgumentParser):
     parser.add_argument('--lr_steps', default=[30, 45], type=int, nargs="+", metavar='LRSteps', help='Epochs to decay learning rate by lr_factor when using MultiStepLR')
     parser.add_argument('--lr_factor', type=float, default=0.1, required=False)
 
+
 def parse_model_opts(parser:argparse.ArgumentParser):
     model_names = load_submodule_arguments(models, parser)
-
+    model_names = [name for name in model_names if name != "__init__"]
     choices = model_names[0]
     for model_name in model_names:
         choices += " | " + model_name
 
-    parser.add_argument("--model", type=str, choices=choices, help="Which model to use " + choices)
+    parser.add_argument("--model", type=str, choices=model_names, help="Which model to use " + str(choices))
+
 
 def load_submodule_arguments(parent_module, parser):
     modules = glob(parent_module.__path__[0] + "/*.py")
@@ -36,7 +38,24 @@ def load_submodule_arguments(parent_module, parser):
         if "define_arguments" not in module.__dict__:
             continue
         module.define_arguments(model_parameter_map)
+
+    for key in model_parameter_map.keys():
+        value = model_parameter_map[key]
+        title = value["title"]
+        del value["title"]
+        parser.add_argument(title, **value)
     return module_names
+
+
+def parse_optimizer_arguments(parser):
+    parser.add_argument('--momentum', default=0.9, type=float, help='Momentum')
+    parser.add_argument('--dampening', default=0.9, type=float, help='dampening of SGD')
+    parser.add_argument('--weight_decay', default=1e-3, type=float, help='Weight Decay')
+    parser.add_argument('--nesterov', action='store_true', help='Nesterov momentum')
+    parser.set_defaults(nesterov=False)
+    parser.add_argument('--optimizer', default='sgd', type=str, help='Currently only support SGD')
+    parser.add_argument('--learning_rate', default=0.1, type=float, help='Initial learning rate')
+
 
 def parse_opts():
     parser = argparse.ArgumentParser()
@@ -56,18 +75,11 @@ def parse_opts():
     parser.add_argument('--n_scales', default=5, type=int, help='Number of scales for multiscale cropping')
     parser.add_argument('--scale_step', default=0.84089641525, type=float, help='Scale step for multiscale cropping')
     parser.add_argument('--train_crop', default='corner', type=str, help='Spatial cropping method in training. random is uniform. corner is selection from 4 corners and 1 center.  (random | corner | center)')
-    parser.add_argument('--momentum', default=0.9, type=float, help='Momentum')
-    parser.add_argument('--dampening', default=0.9, type=float, help='dampening of SGD')
-    parser.add_argument('--weight_decay', default=1e-3, type=float, help='Weight Decay')
     parser.add_argument('--mean_dataset', default='activitynet', type=str, help='dataset for mean values of mean subtraction (activitynet | kinetics)')
     parser.add_argument('--no_mean_norm', action='store_true', help='If true, inputs are not normalized by mean.')
     parser.set_defaults(no_mean_norm=False)
     parser.add_argument('--std_norm', action='store_true', help='If true, inputs are normalized by standard deviation.')
     parser.set_defaults(std_norm=False)
-    parser.add_argument('--nesterov', action='store_true', help='Nesterov momentum')
-    parser.set_defaults(nesterov=False)
-    parser.add_argument('--optimizer', default='sgd', type=str, help='Currently only support SGD')
-    parser.add_argument('--learning_rate', default=0.1, type=float, help='Initial learning rate')
     parser.add_argument('--batch_size', default=128, type=int, help='Batch Size')
     parser.add_argument('--n_epochs', default=250, type=int, help='Number of total epochs to run')
     parser.add_argument('--begin_epoch', default=1, type=int, help='Training begins at this epoch. Previous trained model indicated by resume_path is loaded.')
@@ -95,17 +107,13 @@ def parse_opts():
     parser.add_argument('--norm_value', default=1, type=int, help='If 1, range of inputs is [0-255]. If 255, range of inputs is [0-1].')
     parser.add_argument('--version', default=1.1, type=float, help='Version of the model')
     parser.add_argument('--model_depth', default=18, type=int, help='Depth of resnet (10 | 18 | 34 | 50 | 101)')
-    parser.add_argument('--resnet_shortcut', default='B', type=str, help='Shortcut type of resnet (A | B)')
-    parser.add_argument('--wide_resnet_k', default=2, type=int, help='Wide resnet k')
-    parser.add_argument('--resnext_cardinality', default=32, type=int, help='ResNeXt cardinality')
-    parser.add_argument('--groups', default=3, type=int, help='The number of groups at group convolutions at conv layers')
-    parser.add_argument('--width_mult', default=1.0, type=float, help='The applied width multiplier to scale number of filters')
     parser.add_argument('--manual_seed', default=1, type=int, help='Manually set random seed')
 
     parser.add_argument('--inference', action='store_true', help="Set true for inference and evaluation", default=False)
 
     parse_scheduler_opts(parser)
     parse_model_opts(parser)
+    parse_optimizer_arguments(parser)
 
     args = parser.parse_args()
 

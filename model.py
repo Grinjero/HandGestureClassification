@@ -1,12 +1,12 @@
 import torch
 from torch import nn
 
-from models import c3d, squeezenet, mobilenet, shufflenet, mobilenetv2, shufflenetv2, resnext, resnet, slow_mobilenetv2, fast_mobilenetv2
+from models import c3d, mobilenet, mobilenetv2, resnet, slow_mobilenetv2, fast_mobilenetv2, slow_fast_mobilenetv2
 
 
 def generate_model(opt):
-    assert opt.model in ['c3d', 'squeezenet', 'mobilenet', 'resnext', 'resnet',
-                         'shufflenet', 'mobilenetv2', 'shufflenetv2', 'slow_mobilenetv2', 'fast_mobilenetv2']
+    assert opt.model in ['c3d', 'squeezenet', 'mobilenet', 'resnext', 'resnet', 'shufflenet', 'mobilenetv2',
+                         'shufflenetv2', 'slow_mobilenetv2', 'fast_mobilenetv2', 'slow_fast_mobilenetv2']
 
 
     if opt.model == 'c3d':
@@ -15,25 +15,6 @@ def generate_model(opt):
             num_classes=opt.n_classes,
             sample_size=opt.sample_size,
             sample_duration=opt.sample_duration)
-    elif opt.model == 'squeezenet':
-        from models.squeezenet import get_fine_tuning_parameters
-        model = squeezenet.get_model(
-            version=opt.version,
-            num_classes=opt.n_classes,
-            sample_size=opt.sample_size,
-            sample_duration=opt.sample_duration)
-    elif opt.model == 'shufflenet':
-        from models.shufflenet import get_fine_tuning_parameters
-        model = shufflenet.get_model(
-            groups=opt.groups,
-            width_mult=opt.width_mult,
-            num_classes=opt.n_classes)
-    elif opt.model == 'shufflenetv2':
-        from models.shufflenetv2 import get_fine_tuning_parameters
-        model = shufflenetv2.get_model(
-            num_classes=opt.n_classes,
-            sample_size=opt.sample_size,
-            width_mult=opt.width_mult)
     elif opt.model == 'mobilenet':
         from models.mobilenet import get_fine_tuning_parameters
         model = mobilenet.get_model(
@@ -46,7 +27,6 @@ def generate_model(opt):
             num_classes=opt.n_classes,
             sample_size=opt.sample_size,
             width_mult=opt.width_mult)
-
     elif opt.model == 'fast_mobilenetv2':
         from models.fast_mobilenetv2 import get_fine_tuning_parameters
         model = fast_mobilenetv2.get_model(
@@ -59,30 +39,18 @@ def generate_model(opt):
             num_classes=opt.n_classes,
             sample_size=opt.sample_size,
             width_mult=opt.width_mult)
-    elif opt.model == 'resnext':
-        assert opt.model_depth in [50, 101, 152]
-        from models.resnext import get_fine_tuning_parameters
-        if opt.model_depth == 50:
-            model = resnext.resnext50(
-                num_classes=opt.n_classes,
-                shortcut_type=opt.resnet_shortcut,
-                cardinality=opt.resnext_cardinality,
-                sample_size=opt.sample_size,
-                sample_duration=opt.sample_duration)
-        elif opt.model_depth == 101:
-            model = resnext.resnext101(
-                num_classes=opt.n_classes,
-                shortcut_type=opt.resnet_shortcut,
-                cardinality=opt.resnext_cardinality,
-                sample_size=opt.sample_size,
-                sample_duration=opt.sample_duration)
-        elif opt.model_depth == 152:
-            model = resnext.resnext152(
-                num_classes=opt.n_classes,
-                shortcut_type=opt.resnet_shortcut,
-                cardinality=opt.resnext_cardinality,
-                sample_size=opt.sample_size,
-                sample_duration=opt.sample_duration)
+    elif opt.model == 'slow_fast_mobilenetv2':
+        from models.slow_fast_mobilenetv2 import get_fine_tuning_parameters
+        model = slow_fast_mobilenetv2.get_model(
+            num_classes=opt.n_classes,
+            sample_size=opt.sample_size,
+            width_mult_slow=opt.width_mult_slow,
+            beta=opt.beta,
+            fusion_kernel_size=opt.fusion_kernel_size,
+            fusion_conv_channel_ratio=opt.fusion_conv_channel_ratio,
+            slow_frames=opt.slow_frames,
+            fast_frames=opt.fast_frames,
+            lateral_connection_section_indices=opt.lateral_connection_section_indices)
     elif opt.model == 'resnet':
         assert opt.model_depth in [10, 18, 34, 50, 101, 152, 200]
         from models.resnet import get_fine_tuning_parameters
@@ -128,8 +96,6 @@ def generate_model(opt):
                 shortcut_type=opt.resnet_shortcut,
                 sample_size=opt.sample_size,
                 sample_duration=opt.sample_duration)
-
-
 
     if not opt.no_cuda:
         model = model.cuda()

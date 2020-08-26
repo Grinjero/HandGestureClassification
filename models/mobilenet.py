@@ -96,8 +96,13 @@ def get_fine_tuning_parameters(model, ft_portion):
         raise ValueError("Unsupported ft_portion: 'complete' or 'last_layer' expected")
 
 
-def define_arguments(parser):
-    parser.add_argument('--width_mult', type=float, default=1.0, help="Multiplier for channel sizes")
+def define_arguments(model_parameter_map):
+    model_parameter_map["width_mult"] = {
+        "title": "--width_mult",
+        "type": float,
+        "default": 0.2
+    }
+
 
 def get_model(**kwargs):
     """

@@ -312,19 +312,24 @@ def get_fine_tuning_parameters(model, ft_portion):
 
 def define_arguments(model_parameter_map):
     model_parameter_map["width_mult_slow"] = {
-        "title" : "--width_mult_slow",
-        "default" : 1.0,
-        "type" : float
+        "title": "--width_mult_slow",
+        "default": 1.0,
+        "type": float
+    }
+    model_parameter_map["beta"] = {
+        "title": "--beta",
+        "default": 0.2,
+        "type": float
     }
     model_parameter_map["fusion_kernel_size"] = {
-        "title" : "--fusion_kernel_size",
-        "default" : 5,
-        "type" : int
+        "title": "--fusion_kernel_size",
+        "default": 5,
+        "type": int
     }
     model_parameter_map["fusion_conv_channel_ratio"] = {
-        "title" : "--fusion_conv_channel_ratio",
-        "default" : 2,
-        "type" : int
+        "title": "--fusion_conv_channel_ratio",
+        "default": 2,
+        "type": int
     }
     model_parameter_map["slow_frames"] = {
         "title": "--slow_frames",
@@ -337,10 +342,10 @@ def define_arguments(model_parameter_map):
         "type": int
     }
     model_parameter_map["lateral_connection_section_indices"] = {
-        "title": "--fast_frames",
+        "title": "--lateral_connection_section_indices",
         "default": (0, 2, 3, 4),
         "type": int,
-        "nargs" : "+"
+        "nargs": "+"
     }
 
 
