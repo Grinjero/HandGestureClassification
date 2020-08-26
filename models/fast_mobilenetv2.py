@@ -155,6 +155,13 @@ def get_fine_tuning_parameters(model, ft_portion):
     else:
         raise ValueError("Unsupported ft_portion: 'complete' or 'last_layer' expected")
 
+def define_arguments(model_parameter_map):
+    model_parameter_map["width_mult"] = {
+        "title": "--width_mult",
+        "type": float,
+        "default": 0.2
+    }
+
 
 def get_model(**kwargs):
     """
@@ -165,18 +172,21 @@ def get_model(**kwargs):
 
 
 if __name__ == "__main__":
-    model = get_model(num_classes=27, sample_size=112, width_mult=0.2)
+    model = get_model(num_classes=17, sample_size=112, width_mult=0.2)
     model = model.cuda()
     model.eval()
     print(str(model) + "\n\n\n")
     # BATCH X CHANNELS X NUM_FRAMES X W X H
-    input_var = torch.randn(1, 3, 16, 112, 112).cuda()
+    input_var = torch.randn(4, 3, 16, 112, 112).cuda()
 
     time_start = time.perf_counter()
     with torch.no_grad():
-        output = model(input_var)
+        for i in range(0, 100):
+            output = model(input_var)
 
     duration = time.perf_counter() - time_start
     print("\n\nOutput shape " + str(output.shape) + "\n\n")
-    print("Duration {}".format(duration))
+    avg_execution_time = duration / 100
+    avg_fps = 1 / avg_execution_time
+    print("Duration {}, Average execution time {}, Average FPS {}".format(duration, avg_execution_time, avg_fps))
 

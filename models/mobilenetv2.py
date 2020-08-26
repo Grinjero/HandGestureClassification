@@ -6,7 +6,7 @@ import torch
 import math
 import torch.nn as nn
 import torch.nn.functional as F
-
+import time
 import argparse
 
 def conv_bn(inp, oup, stride):
@@ -152,6 +152,14 @@ def get_fine_tuning_parameters(model, ft_portion):
         raise ValueError("Unsupported ft_portion: 'complete' or 'last_layer' expected")
 
 
+def define_arguments(model_parameter_map):
+    model_parameter_map["width_mult"] = {
+        "title": "--width_mult",
+        "type": float,
+        "default": 0.2
+    }
+
+
 def get_model(**kwargs):
     """
     Returns the model.
@@ -161,13 +169,22 @@ def get_model(**kwargs):
 
 
 if __name__ == "__main__":
-    model = get_model(num_classes=600, sample_size=112, width_mult=1.)
+    model = get_model(num_classes=17, sample_size=112, width_mult=1.)
     model = model.cuda()
     print(model)
 
+    # BATCH X CHANNELS X NUM_FRAMES X W X H
+    input_var = torch.randn(4, 3, 16, 112, 112).cuda()
 
-    input_var = torch.randn(8, 3, 16, 112, 112).cuda()
-    output = model(input_var)
-    print(output.shape)
+    time_start = time.perf_counter()
+    with torch.no_grad():
+        for i in range(0, 100):
+            output = model(input_var)
+
+    duration = time.perf_counter() - time_start
+    print("\n\nOutput shape " + str(output.shape) + "\n\n")
+    avg_execution_time = duration / 100
+    avg_fps = 1 / avg_execution_time
+    print("Duration {}, Average execution time {}, Average FPS {}".format(duration, avg_execution_time, avg_fps))
 
 

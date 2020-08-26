@@ -29,13 +29,13 @@ class TensorboardLogger:
     def __init__(self, output_dir):
         self.writer = SummaryWriter(output_dir)
 
-    def log_iteration(self, values, iteration, subset="train"):
+    def log_iteration(self, values, iteration, subset):
         for key in values.keys():
-            self.writer.add_scalar("{}/{}".format(subset, key), values[key], global_step=iteration)
+            self.writer.add_scalar("{}/batch/{}".format(subset, key), values[key], global_step=iteration)
 
     def log_epoch(self, values, epoch, subset):
         for key in values.keys():
-            self.writer.add_scalar("{}/batch/{}".format(subset, key), values[key], global_step=epoch)
+            self.writer.add_scalar("{}/epoch/{}".format(subset, key), values[key], global_step=epoch)
 
 class Scheduler:
     def __init__(self, optimizer, opts, last_epoch=-1):
@@ -45,6 +45,7 @@ class Scheduler:
             self.scheduler = ReduceLROnPlateau(optimizer, factor=opts.lr_factor, patience=opts.lr_patience)
         else:
             raise ValueError("Scheduler type {} not supported".format(opts.scheduler))
+        print("Using scheduler " + str(opts.scheduler))
         self.scheduler_type = opts.scheduler
 
     def adjust_epoch_begin(self, epoch):

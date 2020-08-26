@@ -6,7 +6,7 @@ for more details.
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-
+import argparse
 
 def conv_bn(inp, oup, stride):
     return nn.Sequential(
@@ -94,7 +94,10 @@ def get_fine_tuning_parameters(model, ft_portion):
 
     else:
         raise ValueError("Unsupported ft_portion: 'complete' or 'last_layer' expected")
-    
+
+
+def define_arguments(parser):
+    parser.add_argument('--width_mult', type=float, default=1.0, help="Multiplier for channel sizes")
 
 def get_model(**kwargs):
     """

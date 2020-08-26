@@ -191,6 +191,15 @@ class ResNet(nn.Module):
         return x
 
 
+def define_arguments(model_parameter_map):
+    model_parameter_map["shortcut_type"] = {
+        "title": "--shortcut_type",
+        "type": str,
+        "default": "B",
+        "help": 'Shortcut type of resnet (A | B)'
+    }
+
+
 def get_fine_tuning_parameters(model, ft_portion):
     if ft_portion == "complete":
         return model.parameters()

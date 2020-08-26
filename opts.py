@@ -1,18 +1,42 @@
 import argparse
+import models
+import os, importlib
+from glob import glob
+
 
 def parse_scheduler_opts(parser:argparse.ArgumentParser):
-    scheduler_subparsers = parser.add_subparsers(title="Scheduler Type", dest="scheduler", description="Which scheduler to use (MultiStepLR | ReduceLROnPlateau)")
+    parser.add_argument("--scheduler", type=str, choices=["MultiStepLR", "ReduceLROnPlateau"], help="Which scheduler to use (MultiStepLR | ReduceLROnPlateau)")
 
-    plateau_subparser = scheduler_subparsers.add_parser('ReduceLROnPlateau')
-    plateau_subparser.add_argument('--lr_patience', type=int, default=10, required=False)
-    plateau_subparser.add_argument('--lr_factor', type=float, default=0.1, required=False)
+    parser.add_argument('--lr_patience', type=int, default=10, required=False, help='How many epochs without improving till learning rate is decayed with lr_factor. Usedy by ReduceLROnPlateau')
+    parser.add_argument('--lr_steps', default=[30, 45], type=int, nargs="+", metavar='LRSteps', help='Epochs to decay learning rate by lr_factor when using MultiStepLR')
+    parser.add_argument('--lr_factor', type=float, default=0.1, required=False)
 
-    multistep_subparser = scheduler_subparsers.add_parser('MultiStepLR')
-    multistep_subparser.add_argument('--lr_steps', default=[30, 45], type=int, nargs="+", metavar='LRSteps', help='epochs to decay learning rate by lr_factor')
-    multistep_subparser.add_argument('--lr_factor', type=float, default=0.1, required=False)
+def parse_model_opts(parser:argparse.ArgumentParser):
+    model_names = load_submodule_arguments(models, parser)
 
+    choices = model_names[0]
+    for model_name in model_names:
+        choices += " | " + model_name
 
-# def parse_model_hyper_parameters(parser:argparse.ArgumentParser):
+    parser.add_argument("--model", type=str, choices=choices, help="Which model to use " + choices)
+
+def load_submodule_arguments(parent_module, parser):
+    modules = glob(parent_module.__path__[0] + "/*.py")
+    module_names = []
+    model_parameter_map = dict()
+    for module_file in modules:
+        module_name = os.path.basename(module_file)[:-3]
+        module_names.append(module_name)
+        if module_name == "__init__":
+            continue
+        importlib.invalidate_caches()
+        import_path = "{}.{}".format(parent_module.__name__, module_name)
+        module = importlib.import_module(import_path)
+
+        if "define_arguments" not in module.__dict__:
+            continue
+        module.define_arguments(model_parameter_map)
+    return module_names
 
 def parse_opts():
     parser = argparse.ArgumentParser()
@@ -69,7 +93,6 @@ def parse_opts():
     parser.add_argument('--no_hflip', action='store_true', help='If true holizontal flipping is not performed.')
     parser.set_defaults(no_hflip=False)
     parser.add_argument('--norm_value', default=1, type=int, help='If 1, range of inputs is [0-255]. If 255, range of inputs is [0-1].')
-    parser.add_argument('--model', default='resnet', type=str, help='(resnet | preresnet | wideresnet | resnext | densenet | ')
     parser.add_argument('--version', default=1.1, type=float, help='Version of the model')
     parser.add_argument('--model_depth', default=18, type=int, help='Depth of resnet (10 | 18 | 34 | 50 | 101)')
     parser.add_argument('--resnet_shortcut', default='B', type=str, help='Shortcut type of resnet (A | B)')
@@ -82,6 +105,8 @@ def parse_opts():
     parser.add_argument('--inference', action='store_true', help="Set true for inference and evaluation", default=False)
 
     parse_scheduler_opts(parser)
+    parse_model_opts(parser)
+
     args = parser.parse_args()
 
     return args
