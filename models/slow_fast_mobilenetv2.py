@@ -264,7 +264,8 @@ class SlowFastMobileNetV2(nn.Module):
         return out
 
     def forward(self, x):
-        slow_x = x[:, :, 0::4, :, :]
+        # slow uses every alpha-th frame
+        slow_x = x[:, :, 0::self.alpha, :, :]
         fast_out, laterals = self._forward_fast(x)
         slow_out = self._forward_slow(slow_x, laterals)
 

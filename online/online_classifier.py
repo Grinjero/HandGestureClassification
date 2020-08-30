@@ -10,7 +10,7 @@ from online.online_utils import Queue, Dummy
 class OnlineClassifier:
     def __init__(self,
                  model_name,
-                 pretrain_path,
+                 model_path,
                  categories_path,
                  sampling_delay,
                  classification_thresh,
@@ -20,7 +20,7 @@ class OnlineClassifier:
                  spatial_transforms):
         """
         :param model_name:
-        :param pretrain_path:
+        :param model_path:
         :param categories_path:
         :param sampling_delay:
         :param classification_thresh:
@@ -38,12 +38,11 @@ class OnlineClassifier:
 
         self.spatial_transforms = spatial_transforms
 
-        self._init_model(model_name, input_image_size, pretrain_path)
+        self._init_model(model_name, input_image_size, model_path)
         self._init_image_queue(num_input_images, input_image_size)
         self._init_output_queue(output_queue_size)
 
-    def _init_model(self, model_name, input_image_size, pretrain_path):
-        # eh
+    def _init_model(self, model_name, input_image_size, model_path):
         model_opts = Dummy
         model_opts.n_classes = len(self.id_class_label_map)
         # C is at the 0 index
@@ -51,12 +50,9 @@ class OnlineClassifier:
         model_opts.model = model_name
         model_opts.no_cuda = False
         model_opts.width_mult = 1
-        model_opts.pretrain_path = pretrain_path
-        model_opts.arch = model_name
-        model_opts.inference = True
+        model_opts.model_path = model_path
+        model_opts.pretrain_path = None
         self.model, _ = generate_model(model_opts)
-
-        print()
         self.model.eval()
 
         device_ind = torch.cuda.current_device()
@@ -104,7 +100,7 @@ class OnlineClassifier:
         top_unfiltered_class_idx = np.argmax(classifier_probabilities)
         unfiltered_class_prob = classifier_probabilities[top_unfiltered_class_idx]
         # label indexing starts from 1
-        filtered_label = self.id_class_label_map[top_filtered_class_idx + 1]
-        unfiltered_label = self.id_class_label_map[top_unfiltered_class_idx + 1]
+        filtered_label = self.id_class_label_map[top_filtered_class_idx]
+        unfiltered_label = self.id_class_label_map[top_unfiltered_class_idx]
 
         return filtered_class_prob, unfiltered_class_prob, filtered_label, unfiltered_label

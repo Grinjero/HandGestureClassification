@@ -172,19 +172,25 @@ if __name__ == '__main__':
         opt.begin_epoch = checkpoint['epoch']
         model.load_state_dict(checkpoint['state_dict'])
 
+        if "scheduler" in checkpoint:
+            scheduler.load_state_dict(checkpoint['scheduler'])
+        else:
+            print("Scheduler state dict not found in the checkpoint file")
+
 
     print('run')
     for i in range(opt.begin_epoch, opt.n_epochs + 1):
 
         if not opt.no_train:
-            scheduler.adjust_epoch_begin(epoch=i)
+            scheduler.adjust_epoch_begin()
             train_epoch(i, train_loader, model, criterion, optimizer, opt, logger)
             state = {
                 'epoch': i,
                 'arch': opt.arch,
                 'state_dict': model.state_dict(),
                 'optimizer': optimizer.state_dict(),
-                'best_prec1': best_prec1
+                'best_prec1': best_prec1,
+                'scheduler': scheduler.state_dict()
                 }
             save_checkpoint(state, False, opt)
             
@@ -197,11 +203,12 @@ if __name__ == '__main__':
                 'arch': opt.arch,
                 'state_dict': model.state_dict(),
                 'optimizer': optimizer.state_dict(),
-                'best_prec1': best_prec1
+                'best_prec1': best_prec1,
+                'scheduler': scheduler.state_dict()
                 }
             save_checkpoint(state, is_best, opt)
 
-            scheduler.adjust_epoch_end(epoch=i, val_loss=validation_loss)
+            scheduler.adjust_epoch_end(val_loss=validation_loss)
 
 
     if opt.test:

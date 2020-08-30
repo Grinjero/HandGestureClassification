@@ -27,6 +27,9 @@ class Compose(object):
     def __init__(self, transforms):
         self.transforms = transforms
 
+    def append(self, transform):
+        self.transforms.append(transform)
+
     def __call__(self, img):
         for t in self.transforms:
             img = t(img)
@@ -36,6 +39,20 @@ class Compose(object):
         for t in self.transforms:
             t.randomize_parameters()
 
+
+class CV2ToPIL(object):
+    """
+    Convert a cv2 read image into a PIL image
+    (H x W x C) -> (C x H x W) and BGR -> RGB
+    """
+    def __init__(self, input_format="BGR"):
+        self.input_format = "BGR"
+
+
+    def __call__(self, image):
+        if self.input_format is "BGR":
+            image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        return Image.fromarray(image)
 
 class ToTensor(object):
     """Convert a ``PIL.Image`` or ``numpy.ndarray`` to tensor.

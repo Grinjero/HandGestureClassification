@@ -32,6 +32,9 @@ class Compose(object):
             img = t(img)
         return img
 
+    def append(self, transform):
+        self.transforms.append(transform)
+
     def randomize_parameters(self):
         for t in self.transforms:
             t.randomize_parameters()

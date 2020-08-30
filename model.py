@@ -109,13 +109,12 @@ def generate_model(opt):
         if opt.pretrain_path:
             print('loading pretrained model {}'.format(opt.pretrain_path))
             pretrain = torch.load(opt.pretrain_path, map_location=torch.device('cpu'))
-            assert opt.arch == pretrain['arch']
             model.load_state_dict(pretrain['state_dict'])
 
             if opt.inference:
                 return model, []
 
-            if opt.model in  ['mobilenet', 'mobilenetv2', 'shufflenet', 'shufflenetv2']:
+            if opt.model in ['mobilenet', 'mobilenetv2', 'shufflenet', 'shufflenetv2']:
                 model.module.classifier = nn.Sequential(
                                 nn.Dropout(0.9),
                                 nn.Linear(model.module.classifier[1].in_features, opt.n_finetune_classes))
@@ -137,7 +136,6 @@ def generate_model(opt):
         if opt.pretrain_path:
             print('loading pretrained model {}'.format(opt.pretrain_path))
             pretrain = torch.load(opt.pretrain_path)
-            assert opt.arch == pretrain['arch']
             model.load_state_dict(pretrain['state_dict'])
 
             if opt.model in  ['mobilenet', 'mobilenetv2', 'shufflenet', 'shufflenetv2']:
@@ -150,11 +148,15 @@ def generate_model(opt):
                                 nn.Dropout(p=0.5),
                                 nn.Conv3d(model.module.classifier[1].in_channels, opt.n_finetune_classes, kernel_size=1),
                                 nn.ReLU(inplace=True),
-                                nn.AvgPool3d((1,4,4), stride=1))
+                                nn.AvgPool3d((1, 4, 4), stride=1))
             else:
                 model.module.fc = nn.Linear(model.module.fc.in_features, opt.n_finetune_classes)
 
             parameters = get_fine_tuning_parameters(model, opt.ft_begin_index)
             return model, parameters
+
+    if opt.model_path:
+        model_state = torch.load(opt.model_path, map_location=torch.device('cpu'))
+        model.load_state_dict(model_state['state_dict'])
 
     return model, model.parameters()

@@ -16,7 +16,7 @@ def parse_args():
 
     # model related
     parser.add_argument('--model', type=str, help='mobilenet', required=True)
-    parser.add_argument('--model_params_path', type=str, help='Path to the .pth file of the used model', required=True)
+    parser.add_argument('--model_path', type=str, help='Path to the .pth file of the used model', required=True)
     parser.add_argument('--no_cuda', type=bool, help='Should GPU or CPU be used', default=False)
 
     parser.add_argument('--categories_path', type=str,
@@ -43,10 +43,12 @@ def parse_args():
     #video stream
     video_subparser = subparsers.add_parser('video')
     video_subparser.add_argument('--video_path', type=str, help="Path to the video")
+    video_subparser.add_argument('--output_fps', type=int, default=30, help="FPS of the output video")
     #image stream
     image_subparser = subparsers.add_parser('images')
     image_subparser.add_argument('--images_dir_path', type=str, help="Path to the directory containing video frames")
     image_subparser.add_argument('--fps', type=int, default=30, help="FPS of the original video")
+    image_subparser.add_argument('--output_fps', type=int, default=30, help="FPS of the output video")
 
     return parser.parse_args()
 
@@ -58,11 +60,11 @@ def main():
     spatial_transforms = Compose([
         Scale(args.smaller_dimension_size),
         CenterCrop(args.center_crop_size),
-        ToTensor(),
+        ToTensor()
     ])
 
     classifier = OnlineClassifier(model_name=args.model,
-                                  pretrain_path=args.model_params_path,
+                                  model_path=args.model_path,
                                   categories_path=args.categories_path,
                                   sampling_delay=args.sampling_delay,
                                   classification_thresh=args.classification_thresh,

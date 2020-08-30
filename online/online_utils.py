@@ -67,32 +67,37 @@ class FPSMeasurer:
         self._avg_fps = 0
         self._fps_1sec = 0
 
+        self.first_second = True
         self.op_start_time = time.monotonic_ns()
 
     def operation_complete(self):
         time_now = time.monotonic_ns()
 
         op_duration = time_now - self.op_start_time
-        self.update_avg_duration(op_duration)
-        self.update_avg_fps()
+        self._update_avg_duration(op_duration)
+        self._update_avg_fps()
 
-    def update_avg_duration(self, op_duration):
+    def _update_avg_duration(self, op_duration):
         self._avg_duration = 0.98 * self._avg_duration + 0.02 * op_duration
 
-    def update_avg_fps(self):
+    def _update_avg_fps(self):
         time_now = time.monotonic_ns()
         if (time_now - self._fps_start) > 1000000000:
             self._fps_start = time_now
             self._avg_fps = 0.7 * self._avg_fps + 0.3 * self._fps_1sec
             self._fps_1sec = 0
 
+        self.first_second = False
         self._fps_1sec += 1
 
     def avg_duration(self):
         return self._avg_duration
 
     def fps(self):
-        return self._avg_fps
+        if self.first_second:
+            return 1 / self._avg_duration
+        else:
+            return self._avg_fps
 
 class ImageStreamer:
     def __init__(self, image_directory, fps=30):
@@ -115,8 +120,10 @@ class ImageStreamer:
         return True, image
 
     def release(self):
-        # just so it has the safe interface as cv2.VideoCapture
+        # just so it has the same interface as cv2.VideoCapture
         pass
+
+
 
 class Dummy(object):
     pass

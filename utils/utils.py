@@ -48,13 +48,16 @@ class Scheduler:
         print("Using scheduler " + str(opts.scheduler))
         self.scheduler_type = opts.scheduler
 
-    def adjust_epoch_begin(self, epoch):
+    def adjust_epoch_begin(self):
         if self.scheduler_type == "MultiStepLR":
-            self.scheduler.step(epoch=epoch)
+            self.scheduler.step()
 
-    def adjust_epoch_end(self, epoch, val_loss):
+    def adjust_epoch_end(self, val_loss):
         if self.scheduler_type == "ReduceLROnPlateau":
-            self.scheduler.step(val_loss, epoch=epoch)
+            self.scheduler.step(val_loss)
+
+    def state_dict(self):
+        return self.scheduler.state_dict()
 
 class Logger(object):
 
