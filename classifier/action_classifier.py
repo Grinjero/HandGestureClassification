@@ -20,7 +20,6 @@ class ActionClassifier:
             self.gpu_id = torch.cuda.current_device()
 
         self.downsampling = downsampling
-        spatial_transforms.append(ToTensor())
         self.spatial_transforms = spatial_transforms
 
 

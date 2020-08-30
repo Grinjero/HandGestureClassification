@@ -1,7 +1,6 @@
 def parse_paths(parser):
-    parser.add_argument('--model_path', type=str, help='Path to the .pth file of the used model', required=True)
     parser.add_argument('--categories_path', type=str,
-                        help='File containing class indices and their names, etc. annotation_Jester/categories.txt',
+                        help='File containing class indices and their names, \'annotation_Jester/categories.txt\' or \'annotation_Jester/classInd.txt\'',
                         required=True)
 
 def parser_preprocessing(parser):
@@ -18,9 +17,3 @@ def parse_source(parser):
     #video stream
     video_subparser = subparsers.add_parser('video')
     video_subparser.add_argument('--video_path', type=str, help="Path to the video", required=True)
-
-    # #image stream
-    # image_subparser = subparsers.add_parser('images')
-    # image_subparser.add_argument('--images_dir_path', type=str, help="Path to the directory containing video frames")
-    # image_subparser.add_argument('--fps', type=int, default=30, help="FPS of the original video")
-    # image_subparser.add_argument('--output_fps', type=int, default=-1, help="FPS of the output video")

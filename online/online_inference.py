@@ -60,7 +60,8 @@ def main():
     spatial_transforms = Compose([
         Scale(args.smaller_dimension_size),
         CenterCrop(args.center_crop_size),
-        ToTensor()
+        ToTensor(),
+        Normalize([0, 0, 0], [1, 1, 1])
     ])
 
     classifier = OnlineClassifier(model_name=args.model,

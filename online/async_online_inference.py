@@ -30,6 +30,8 @@ def main():
         CV2ToPIL("BGR"),
         Scale(opts.smaller_dimension_size),
         CenterCrop(opts.center_crop_size),
+        ToTensor(),
+        Normalize([0, 0, 0], [1, 1, 1])
     ])
 
     classifier = ActionClassifier(opts=opts, spatial_transforms=spatial_transforms)

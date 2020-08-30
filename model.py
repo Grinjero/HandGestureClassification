@@ -155,8 +155,8 @@ def generate_model(opt):
             parameters = get_fine_tuning_parameters(model, opt.ft_begin_index)
             return model, parameters
 
-    if opt.model_path:
-        model_state = torch.load(opt.model_path, map_location=torch.device('cpu'))
+    if opt.resume_path:
+        model_state = torch.load(opt.resume_path, map_location=torch.device('cpu'))
         model.load_state_dict(model_state['state_dict'])
 
     return model, model.parameters()
