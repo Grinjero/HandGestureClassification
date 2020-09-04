@@ -18,6 +18,7 @@ from target_transforms import ClassLabel, VideoID
 from target_transforms import Compose as TargetCompose
 from dataset import get_training_set, get_validation_set, get_test_set
 from utils.utils import *
+
 from train import train_epoch
 from validation import val_epoch
 import test
@@ -148,7 +149,7 @@ if __name__ == '__main__':
             CenterCrop(opt.sample_size),
             ToTensor(opt.norm_value), norm_method
         ])
-        #temporal_transform = LoopPadding(opt.sample_duration)
+
         temporal_transform = TemporalCenterCrop(opt.sample_duration, opt.downsample)
         target_transform = ClassLabel()
         validation_data = get_validation_set(

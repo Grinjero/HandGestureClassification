@@ -111,7 +111,7 @@ def get_annotation(data, whole_path):
     return  annotation
 
 
-def make_dataset( annotation_path, video_path , whole_path,sample_duration, n_samples_for_each_video, stride_len):
+def make_dataset( annotation_path, video_path, whole_path, sample_duration, n_samples_for_each_video, stride_len):
     
     data = load_annotation_data(annotation_path)
     whole_video_path = os.path.join(video_path,whole_path)
@@ -122,7 +122,7 @@ def make_dataset( annotation_path, video_path , whole_path,sample_duration, n_sa
         idx_to_class[label] = name
 
     dataset = []
-    print("[INFO]: Videot  is loading...")
+    print("[INFO]: Video is loading...")
     import glob
 
     n_frames = len(glob.glob(whole_video_path + '/*.jpg'))
@@ -137,13 +137,12 @@ def make_dataset( annotation_path, video_path , whole_path,sample_duration, n_sa
             label_list.append(class_to_idx[annotation[i]['label']])
 
     label_list = np.array(label_list)
-    for _ in range(1,n_frames+1 - sample_duration,stride_len):
+    for _ in range(1, n_frames + 1 - sample_duration, stride_len):
         
         sample = {
                 'video': whole_video_path,
                 'index': _ ,
-                'video_id' : _ 
-
+                'video_id' : _
             }
         ## Different strategies to set true label of overlaping frames
         # counts = np.bincount(label_list[np.array(list(range(_    - int(sample_duration/4), _ )))])
@@ -196,11 +195,11 @@ class NVOnline(data.Dataset):
                  target_transform=None,
                  sample_duration=16,
                  modality='RGB',
-                 stride_len = None,
+                 stride_len=None,
                  get_loader=get_default_video_loader):
 
         self.data, self.class_names = make_dataset(
-         annotation_path, video_path, whole_path, sample_duration,n_samples_for_each_video, stride_len)
+         annotation_path, video_path, whole_path, sample_duration, n_samples_for_each_video, stride_len)
         
         self.spatial_transform = spatial_transform
         self.temporal_transform = temporal_transform
@@ -223,9 +222,8 @@ class NVOnline(data.Dataset):
 
         if self.temporal_transform is not None:
             frame_indices = self.temporal_transform(frame_indices)
-        
         clip = self.loader(path, frame_indices, self.modality, self.sample_duration)
-        oversample_clip =[]
+
         if self.spatial_transform is not None:
             self.spatial_transform.randomize_parameters()
             clip = [self.spatial_transform(img) for img in clip]

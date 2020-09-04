@@ -1,23 +1,17 @@
 import numpy as np
 import torch
-from torch.autograd import Variable
 from torch.nn import functional
 
 from model import generate_model
 from datasets.dataset_utils import get_class_labels
-from online.online_utils import Queue, Dummy
+from online.online_utils import Queue
 
 class OnlineClassifier:
     def __init__(self,
-                 model_name,
-                 model_path,
-                 categories_path,
-                 sampling_delay,
-                 classification_thresh,
-                 output_queue_size,
-                 num_input_images,
+                 opts,
+                 spatial_transforms,
                  input_image_size,
-                 spatial_transforms):
+                 num_input_images=16):
         """
         :param model_name:
         :param model_path:
@@ -30,29 +24,24 @@ class OnlineClassifier:
         :param spatial_transforms:
         """
         # classification related
-        self.classification_thresh = classification_thresh
-        self.sampling_delay = sampling_delay
-        self.frame_counter = 0
-
-        self.id_class_label_map = get_class_labels(categories_path)
+        self.classification_thresh = opts.classification_thresh
+        self.sampling_delay = opts.sampling_delay
+        self.frame_counter = -1
+        self.num_input_images = num_input_images
+        self.id_class_label_map = get_class_labels(opts.categories_path)
 
         self.spatial_transforms = spatial_transforms
 
-        self._init_model(model_name, input_image_size, model_path)
+        self._init_model(opts)
         self._init_image_queue(num_input_images, input_image_size)
-        self._init_output_queue(output_queue_size)
+        self._init_output_queue(opts.output_queue_size)
 
-    def _init_model(self, model_name, input_image_size, model_path):
-        model_opts = Dummy
-        model_opts.n_classes = len(self.id_class_label_map)
-        # C is at the 0 index
-        model_opts.sample_size = input_image_size[1]
-        model_opts.model = model_name
-        model_opts.no_cuda = False
-        model_opts.width_mult = 1
-        model_opts.model_path = model_path
-        model_opts.pretrain_path = None
-        self.model, _ = generate_model(model_opts)
+
+    def _init_model(self, opts):
+        opts.n_classes = len(self.id_class_label_map)
+        opts.sample_size = self.num_input_images
+        opts.resume_path = opts.model_path
+        self.model, _ = generate_model(opts)
         self.model.eval()
 
         device_ind = torch.cuda.current_device()
@@ -79,7 +68,7 @@ class OnlineClassifier:
         self.image_queue.enqueue(current_frame)
         clip = self.image_queue.to_tuple()
         clip = torch.stack(clip, 0)
-        clip = clip.permute(1, 0, 3, 2).unsqueeze(0)
+        clip = clip.permute(1, 0, 2, 3).unsqueeze(0)
 
         with torch.no_grad():
             inputs = clip.cuda()
@@ -90,17 +79,16 @@ class OnlineClassifier:
 
             self.output_queue.enqueue(classifier_probabilities)
 
-            filtered_probabilites = self.output_queue.mean_filtering()
+            filtered_probabilites = self.output_queue.median_filtering()
 
-
-        #class_idx = np.argmax(filtered_probabilites)
         top_filtered_class_idx = np.argmax(filtered_probabilites)
         filtered_class_prob = filtered_probabilites[top_filtered_class_idx]
 
+
         top_unfiltered_class_idx = np.argmax(classifier_probabilities)
         unfiltered_class_prob = classifier_probabilities[top_unfiltered_class_idx]
-        # label indexing starts from 1
+
         filtered_label = self.id_class_label_map[top_filtered_class_idx]
         unfiltered_label = self.id_class_label_map[top_unfiltered_class_idx]
-
+        print("Class {}, prob {}".format(unfiltered_label, unfiltered_class_prob))
         return filtered_class_prob, unfiltered_class_prob, filtered_label, unfiltered_label

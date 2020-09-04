@@ -114,7 +114,7 @@ def generate_model(opt):
             if opt.inference:
                 return model, []
 
-            if opt.model in ['mobilenet', 'mobilenetv2', 'shufflenet', 'shufflenetv2']:
+            if opt.model in ['mobilenet', 'mobilenetv2', 'shufflenet', 'shufflenetv2', 'slow_fast_mobilenetv2']:
                 model.module.classifier = nn.Sequential(
                                 nn.Dropout(0.9),
                                 nn.Linear(model.module.classifier[1].in_features, opt.n_finetune_classes))
@@ -138,7 +138,7 @@ def generate_model(opt):
             pretrain = torch.load(opt.pretrain_path)
             model.load_state_dict(pretrain['state_dict'])
 
-            if opt.model in  ['mobilenet', 'mobilenetv2', 'shufflenet', 'shufflenetv2']:
+            if opt.model in  ['mobilenet', 'mobilenetv2', 'shufflenet', 'shufflenetv2', '']:
                 model.module.classifier = nn.Sequential(
                                 nn.Dropout(0.9),
                                 nn.Linear(model.module.classifier[1].in_features, opt.n_finetune_classes)

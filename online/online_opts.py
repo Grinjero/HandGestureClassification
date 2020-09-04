@@ -3,9 +3,12 @@ def parse_paths(parser):
                         help='File containing class indices and their names, \'annotation_Jester/categories.txt\' or \'annotation_Jester/classInd.txt\'',
                         required=True)
 
-def parser_preprocessing(parser):
+def parse_preprocessing(parser):
     parser.add_argument('--smaller_dimension_size', type=int, default=120)
     parser.add_argument('--center_crop_size', type=int, default=112)
+
+def parse_online(parser):
+    parser.add_argument('--skip_frames', type=int, default=4, help='How many frames to skip between classifications')
 
 def parse_source(parser):
     parser.add_argument('--output_fps', type=int, default=-1, help="FPS of the output video")

@@ -24,9 +24,7 @@ def val_epoch(epoch, data_loader, model, criterion, opt, tensorboard_logger: Ten
         if not opt.no_cuda:
             targets = targets.cuda()
         with torch.no_grad():
-            inputs = Variable(inputs)
-            targets = Variable(targets)
-        outputs = model(inputs)
+            outputs = model(inputs)
         loss = criterion(outputs, targets)
         prec1, prec5 = calculate_accuracy(outputs.data, targets.data, topk=(1,5))
         top1.update(prec1, inputs.size(0))

@@ -46,13 +46,16 @@ class CV2ToPIL(object):
     (H x W x C) -> (C x H x W) and BGR -> RGB
     """
     def __init__(self, input_format="BGR"):
-        self.input_format = "BGR"
+        self.input_format = input_format
 
 
     def __call__(self, image):
         if self.input_format is "BGR":
             image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        return Image.fromarray(image)
+        image = Image.fromarray(image)
+        if self.input_format is "BGR":
+            image = image.convert("RGB")
+        return image
 
 class ToTensor(object):
     """Convert a ``PIL.Image`` or ``numpy.ndarray`` to tensor.
@@ -135,6 +138,51 @@ class Normalize(object):
         for t, m, s in zip(tensor, self.mean, self.std):
             t.sub_(m).div_(s)
         return tensor
+
+    def randomize_parameters(self):
+        pass
+
+
+class ScaleCV2(object):
+    """Rescale the input Image H x W x C to the given size.
+    Args:
+        size (tuple or int): Desired output size. If size is a tuple like
+            (w, h), output size will be matched to this. If size is an int,
+            smaller edge of the image will be matched to this number.
+            i.e, if height > width, then image will be rescaled to
+            (size * height / width, size)
+        interpolation (int, optional): Desired interpolation. Default is
+            ``cv2.INTER_LINEAR``
+    """
+
+    def __init__(self, size, interpolation=cv2.INTER_LINEAR):
+        assert isinstance(size,
+                          int) or (isinstance(size, collections.Iterable) and
+                                   len(size) == 2)
+        self.size = size
+        self.interpolation = interpolation
+
+    def __call__(self, img):
+        """
+        Args:
+            img: nparray
+        Returns:
+            PIL.Image: Rescaled image.
+        """
+        if isinstance(self.size, int):
+            h, w, c = img.shape
+            if (w <= h and w == self.size) or (h <= w and h == self.size):
+                return img
+            if w < h:
+                ow = self.size
+                oh = int(self.size * h / w)
+                return cv2.resize(img, (ow, oh), interpolation=self.interpolation)
+            else:
+                oh = self.size
+                ow = int(self.size * w / h)
+                return cv2.resize(img, (ow, oh), interpolation=self.interpolation)
+        else:
+            return cv2.resize(img, self.size, self.interpolation)
 
     def randomize_parameters(self):
         pass

@@ -4,14 +4,13 @@ import torch
 import torch.nn.functional as F
 
 from model import generate_model
-from spatial_transforms import ToTensor
 
 class ActionClassifier:
     """
     Action Predictor for action recognition.
     """
 
-    def __init__(self, opts, spatial_transforms, downsampling=1, gpu_id=None):
+    def __init__(self, opts, spatial_transforms, gpu_id=None):
         self.model, _ = generate_model(opts)
         self.model.eval()
 
@@ -19,7 +18,6 @@ class ActionClassifier:
         if self.gpu_id is None:
             self.gpu_id = torch.cuda.current_device()
 
-        self.downsampling = downsampling
         self.spatial_transforms = spatial_transforms
 
 
@@ -32,11 +30,8 @@ class ActionClassifier:
             Model prediction tensor in shape [n_classes]
         """
         with torch.no_grad():
-            inputs = []
-            for frame_ind, frame in enumerate(clip):
-                if frame_ind % self.downsampling == 0:
-                    inputs.append(self.spatial_transforms(frame))
-
+            # inputs = clip[self.temporal_transform(clip)]
+            inputs = [self.spatial_transforms(frame) for frame in clip]
             inputs = torch.stack(inputs, 0)
             inputs = inputs.permute(1, 0, 2, 3).unsqueeze(0)
 

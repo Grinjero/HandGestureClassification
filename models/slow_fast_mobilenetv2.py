@@ -24,16 +24,6 @@ class InvertedResidual(nn.Module):
         hidden_dim = round(inp * expand_ratio)
         self.use_res_connect = self.stride == (1, 1, 1) and inp == oup
 
-        # temporal_pad = 1
-        # if (isinstance(depthwise_kernel_size, tuple) and self.stride[0] == 1 and depthwise_kernel_size[0]) == 1:
-        #     temporal_pad = 0
-        #
-        # padding = (temporal_pad, padding[1], padding[2])
-
-        # silver bullety
-        # # padding = 0
-        # if stride[1] == 1 and (isinstance(depthwise_kernel_size, tuple)) and self.stride[1] == 1:
-        #     padding = (temporal_pad, 0, 0)
         if expand_ratio == 1:
             self.conv = nn.Sequential(
                 # dw
@@ -110,7 +100,7 @@ class SlowFastMobileNetV2(nn.Module):
         self.last_channel = last_channel
 
         assert self.sample_size % 16 == 0.
-        assert self.slow_frames % self.slow_frames == 0
+        assert self.fast_frames % self.slow_frames == 0
         self.alpha = self.fast_frames // self.slow_frames
 
         block = InvertedResidual

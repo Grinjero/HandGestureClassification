@@ -29,7 +29,7 @@ class VideoVisualizer:
 
             if frame is None:
                 # give the model or frame capturer some time
-                time.sleep(0.02)
+                time.sleep(0.01)
                 continue
 
             frame = self._draw_visualizers(frame)
@@ -133,7 +133,7 @@ class TopKVisualizer(ImageVisualizer):
         for i in range(self.top_k):
             color = self._get_color(top_classes[i])
             class_name = self.class_map[top_classes[i]]
-            text = "{} {:.4f}".format(class_name, top_scores[i])
+            text = "{} {:.6f}".format(class_name, top_scores[i])
 
             frame = cv2.putText(frame, text, (x, y), fontFace=cv2.FONT_HERSHEY_SIMPLEX,
                 fontScale=0.5, color=color, thickness=2)

@@ -235,7 +235,6 @@ class NV(data.Dataset):
     
         im_dim = clip[0].size()[-2:]
         clip = torch.cat(clip, 0).view((self.sample_duration, -1) + im_dim).permute(1, 0, 2, 3)
-        
      
         target = self.data[index]
         if self.target_transform is not None:

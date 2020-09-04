@@ -37,30 +37,47 @@ class TensorboardLogger:
         for key in values.keys():
             self.writer.add_scalar("{}/epoch/{}".format(subset, key), values[key], global_step=epoch)
 
+
 class Scheduler:
-    def __init__(self, optimizer, opts, last_epoch=-1):
+    def __init__(self, optimizer, opts):
+        self.optimizer = optimizer
+        self.initial_lr = opts.learning_rate
+        self.lr_factor = opts.lr_factor
         if opts.scheduler == "MultiStepLR":
-            self.scheduler = MultiStepLR(optimizer, milestones=opts.lr_steps, last_epoch=last_epoch, gamma=opts.lr_factor)
+            self.lr_steps = opts.lr_steps
         elif opts.scheduler == "ReduceLROnPlateau":
-            self.scheduler = ReduceLROnPlateau(optimizer, factor=opts.lr_factor, patience=opts.lr_patience)
+            self.lr_patience = opts.lr_patience
         else:
             raise ValueError("Scheduler type {} not supported".format(opts.scheduler))
         print("Using scheduler " + str(opts.scheduler))
         self.scheduler_type = opts.scheduler
 
-    def adjust_epoch_begin(self):
+    def _adjust_learning_rate_multistep(self, epoch):
+        lr_new = self.initial_lr * (0.1 ** (sum(epoch >= np.array(self.lr_steps))))
+        for param_group in self.optimizer.param_groups:
+            param_group['lr'] = lr_new
+
+    def adjust_learning_rate(self, epoch):
         if self.scheduler_type == "MultiStepLR":
-            self.scheduler.step()
+            self._adjust_learning_rate_multistep(epoch)
+        # elif self.scheduler_type == "ReduceLROnPlateau":
+        #     self._adjust_learning_rate_plateau()
+        else:
+            raise ValueError("Unsupported scheduler")
 
-    def adjust_epoch_end(self, val_loss):
-        if self.scheduler_type == "ReduceLROnPlateau":
-            self.scheduler.step(val_loss)
-
-    def state_dict(self):
-        return self.scheduler.state_dict()
-
-    def load_state_dict(self, state_dict):
-        self.scheduler.load_state_dict(state_dict)
+    # def adjust_epoch_begin(self):
+    #     if self.scheduler_type == "MultiStepLR":
+    #         self.scheduler.step()
+    #
+    # def adjust_epoch_end(self, val_loss):
+    #     if self.scheduler_type == "ReduceLROnPlateau":
+    #         self.scheduler.step(val_loss)
+    #
+    # def state_dict(self):
+    #     return self.scheduler.state_dict()
+    #
+    # def load_state_dict(self, state_dict):
+    #     self.scheduler.load_state_dict(state_dict)
 
 class Logger(object):
 

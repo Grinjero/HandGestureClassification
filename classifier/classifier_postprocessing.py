@@ -9,8 +9,11 @@ class Postprocessor:
 
 class ClassifierPostprocessing(Postprocessor):
     ""
-    def __init__(self, postprocessing_transforms):
-        self.postprocessing_transforms = postprocessing_transforms
+    def __init__(self, non_gesture_indices, classification_thresh):
+        """
+        :param indices_of_non_gestures: indices of classes that are not valid gestures (No_Gesture, Doing_other_things, etc.)
+        """
+        self.non_gesture_indices = non_gesture_indices
 
     def __call__(self, probabilities):
         return probabilities

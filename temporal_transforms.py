@@ -1,5 +1,4 @@
 import random
-import math
 
 
 class LoopPadding(object):
@@ -22,6 +21,28 @@ class LoopPadding(object):
 
         return out
 
+
+class TemporalEndCrop(object):
+    """
+    Temporally crop the given frame indices at the end
+    """
+    def __init__(self, size, downsample):
+        self.size = size
+        self.downsample = downsample
+
+    def __call__(self, frame_indices):
+        clip_duration = self.size * self.downsample
+
+        out = frame_indices[-clip_duration:]
+
+        for index in out:
+            if len(out) >= clip_duration:
+                break
+            out.append(index)
+
+        selected_frames = [out[i] for i in range(0, clip_duration, self.downsample)]
+
+        return selected_frames
 
 class TemporalBeginCrop(object):
     """Temporally crop the given frame indices at a beginning.

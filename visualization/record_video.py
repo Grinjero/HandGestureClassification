@@ -1,15 +1,13 @@
 import cv2
-import os
-import argparse
 
 if __name__ == "__main__":
     cap = cv2.VideoCapture(0)
 
     fourcc = cv2.VideoWriter_fourcc(*'XVID')
-    video_name = input("Enter the video name (without ext)")
+    video_name = input("Enter the video name (without ext) ")
     video_path = "sample_videos/" + video_name + ".avi"
     out = cv2.VideoWriter(video_path, fourcc, 30, (640, 480))
-    input("Enter anything and then press \'q\' to finish recording")
+    input("Enter to start recording and then press \'q\' to finish recording")
 
     cv2.namedWindow("Camera")
     while(cap.isOpened()):
