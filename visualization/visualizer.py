@@ -2,6 +2,7 @@ import time
 import atexit
 import threading
 
+import numpy as np
 import torch
 import matplotlib.pyplot as plt
 import cv2
@@ -177,7 +178,7 @@ class TopKVisualizer(ImageVisualizer):
 
 
 class ClassifiedClassVisualizer(ImageVisualizer):
-    def __init__(self, class_map, label_display_time=1, colormap="rainbow"):
+    def __init__(self, class_map, label_display_time=1.5, colormap="rainbow"):
         """
         :param class_map: key -> class index, values -> class label
         :param label_display_time: how long the class label will be displayed on screen
@@ -186,17 +187,17 @@ class ClassifiedClassVisualizer(ImageVisualizer):
         self.class_map = class_map
         self.num_classes = len(class_map.keys())
         self.label_display_time = label_display_time
-        self.colormap = colormap
+        self.color_map = plt.get_cmap(colormap)
 
-        self.current_class = None
+        self.current_class_ind = None
         self.current_class_time_start = None
 
     def set_current_class(self, class_ind):
-        self.current_class = self.class_map[class_ind]
-        self.current_class_time_start = time.process_time()
+        self.current_class_ind = class_ind
+        self.current_class_time_start = time.clock()
 
     def deset_current_class(self):
-        self.current_class = None
+        self.current_class_ind = None
         self.current_class_time_start = None
 
     def update_state(self, state_dict):
@@ -204,21 +205,20 @@ class ClassifiedClassVisualizer(ImageVisualizer):
             current_class = state_dict["activated_class"]
             self.set_current_class(current_class)
 
-            del state_dict["activate_class"]
+            del state_dict["activated_class"]
 
     def draw_frame(self, frame):
-        if self.current_class is None:
+        if self.current_class_ind is None:
             return
 
-        duration_since_activation = time.process_time() - self.current_class_time_start
-        opacity = min((duration_since_activation / self.label_display_time) * 255, 255)
-
+        duration_since_activation = time.clock() - self.current_class_time_start
+        opacity = int(min((duration_since_activation / self.label_display_time) * 255, 255))
         w, h, c = frame.shape
-        x = int(0.9 * w)
-        y = 45
-        color = get_class_color(self.colormap, self.current_class, self.num_classes)
+        x = int(0.75 * w)
+        y = 60
+        color = get_class_color(self.color_map, self.current_class_ind, self.num_classes)
         color = (color[0], color[1], color[2], opacity)
-        cv2.putText(frame, self.current_class, (x, y), fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=0.8,
+        cv2.putText(frame, self.class_map[self.current_class_ind], (x, y), fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=0.8,
                     color=color, thickness=2)
 
         if duration_since_activation > self.label_display_time:

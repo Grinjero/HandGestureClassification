@@ -1,6 +1,7 @@
 import argparse
 import time
 
+from datasets.dataset_utils import get_class_labels
 from spatial_transforms import *
 from classifier.action_classifier import ActionClassifier
 from classifier.classifier_postprocessing import ClassifierPostprocessing
@@ -26,6 +27,7 @@ def parse_args():
 
 def main():
     opts = parse_args()
+    class_map = get_class_labels(opts.categories_path)
 
     spatial_transforms = Compose([
         CV2ToPIL("BGR"),
@@ -51,13 +53,11 @@ def main():
     else:
         raise ValueError("Invalid source")
 
-    topK_visualizer = TopKVisualizer(opts.n_classes,
-                                      opts.categories_path,
-                                      top_k=5)
+    topK_visualizer = TopKVisualizer(class_map=class_map,
+                                    top_k=5)
     fps_visualizer = FPSVisualizer()
     image_visualizers = [topK_visualizer, fps_visualizer]
     video_visualizer = AsyncVideoVisualizer(video_capturer, image_visualizers)
-    postprocessing = ClassifierPostprocessing(None, None)
 
     fps_measurer = FPSMeasurer()
 
@@ -72,12 +72,12 @@ def main():
             continue
 
         prediction = classifier(clip)
-        processed_prediction = postprocessing(prediction)
+        # processed_prediction = postprocessing(prediction)
 
         fps_measurer.operation_complete()
 
         classifier_state = {
-            "predictions": processed_prediction,
+            "predictions": classifier,
             "fps": fps_measurer.fps()
         }
         video_visualizer.update_state(classifier_state)

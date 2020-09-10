@@ -3,7 +3,6 @@ From SlowFast https://github.com/facebookresearch/SlowFast
 """
 
 import atexit
-import torch
 from collections import deque
 import threading
 import cv2

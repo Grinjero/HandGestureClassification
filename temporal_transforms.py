@@ -1,6 +1,25 @@
 import random
 
 
+class OnlineTemporalCrop(object):
+
+    def __init__(self, num_frames, downsample):
+        self.num_frames = num_frames
+        self.downsample = downsample
+
+    def __call__(self, frames):
+        vid_duration = len(frames)
+        crop_duration = self.num_frames * self.downsample
+
+        crop_duration = min(vid_duration, crop_duration)
+        frames = frames[-crop_duration:]
+        selected_frames = []
+        for i in range(0, crop_duration, self.downsample):
+            neg_ind = -(i + 1)
+            selected_frames.insert(0, frames[neg_ind])
+
+        return selected_frames
+
 class LoopPadding(object):
 
     def __init__(self, size, downsample):
@@ -8,7 +27,7 @@ class LoopPadding(object):
         self.downsample = downsample
 
     def __call__(self, frame_indices):
-        vid_duration  = len(frame_indices)
+        vid_duration = len(frame_indices)
         clip_duration = self.size * self.downsample
         out = frame_indices
 
@@ -41,7 +60,6 @@ class TemporalEndCrop(object):
             out.append(index)
 
         selected_frames = [out[i] for i in range(0, clip_duration, self.downsample)]
-
         return selected_frames
 
 class TemporalBeginCrop(object):

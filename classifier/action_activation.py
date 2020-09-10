@@ -1,5 +1,7 @@
 import numpy as np
 import time
+import torch
+
 from online.online_utils import Queue
 
 
@@ -32,7 +34,7 @@ class ActionActivator:
         self.finished_prediction = False
         # counts for how long has the activator been active
         self.active_time_start = 0
-        self.previous_step_time = time.process_time()
+        self.previous_step_time = time.clock()
 
         # how many times has a contrast class appeared in succession
         self.passive_count = 0
@@ -52,7 +54,7 @@ class ActionActivator:
         self.active = activation_state
 
         if self.active:
-            # self.active_time_start = time.process_time()
+            # self.active_time_start = time.clock()
             self.active_time_start = self.previous_step_time
             self.previous_step_time = self.active_time_start
 
@@ -83,6 +85,11 @@ class ActionActivator:
         :param probabilities: numpy array of class probabilities
         :return: detected class index if a class is detected, None otherwise
         """
+        if isinstance(probabilities, torch.Tensor):
+            if probabilities.ndim != 1:
+                probabilities = torch.squeeze(probabilities)
+            probabilities = probabilities.numpy()
+
 
         probabilities = self._postprocess(probabilities)
 
@@ -91,7 +98,7 @@ class ActionActivator:
         else:
             self._set_activator_state(True)
 
-        current_step_time = time.process_time()
+        current_step_time = time.clock()
 
         activated_class = None
         if self.active:
@@ -116,14 +123,14 @@ class ActionActivator:
             if self.cum_sum[best_idx] > 0.7:
                 if self.early_predict:
                     if best_idx != self.previous_best_idx:
-                        print("Early detection: class {} prob {:.5f}", best_idx, self.cum_sum[best_idx])
+                        print("Early detection: class {} prob {:.5f}".format(best_idx, self.cum_sum[best_idx]))
                         activated_class = best_idx
                 else:
                     if best_idx == self.previous_best_idx:
-                        print("Late detection: class {} prob {:.5f}", best_idx, self.cum_sum[best_idx])
+                        print("Late detection: class {} prob {:.5f}".format(best_idx, self.cum_sum[best_idx]))
                         activated_class = best_idx
                     else:
-                        print("Late detection: class {} prob {:.5f}", best_idx, self.cum_sum[best_idx])
+                        print("Late detection: class {} prob {:.5f}".format(best_idx, self.cum_sum[best_idx]))
                         activated_class = best_idx
 
                 self.previous_best_idx = best_idx

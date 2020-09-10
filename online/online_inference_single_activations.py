@@ -29,7 +29,7 @@ def parse_args():
 
 def main():
     opts = parse_args()
-
+    class_map = get_class_labels(opts.categories_path)
     spatial_transforms = Compose([
         CV2ToPIL("BGR"),
         Scale(opts.smaller_dimension_size),
@@ -40,6 +40,7 @@ def main():
 
     sequence_length = opts.sample_duration * opts.downsample
 
+    opts.n_classes = len(class_map)
     classifier = ActionClassifier(opts=opts)
     if opts.source == "camera":
         video_capturer = SyncVideoManager(source=opts.camera_index,
@@ -54,7 +55,7 @@ def main():
     else:
         raise ValueError("Invalid source")
 
-    class_map = get_class_labels(opts.categories_path)
+
     topK_visualizer = TopKVisualizer(class_map,
                                      top_k=5)
     fps_visualizer = FPSVisualizer()

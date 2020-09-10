@@ -156,6 +156,8 @@ def generate_model(opt):
             return model, parameters
 
     if opt.resume_path:
+        if not opt.no_cuda:
+            model = model.cuda()
         model_state = torch.load(opt.resume_path, map_location=torch.device('cpu'))
         model.load_state_dict(model_state['state_dict'])
 

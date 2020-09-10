@@ -25,7 +25,7 @@ class OnlineClassifier:
         """
         # classification related
         self.classification_thresh = opts.classification_thresh
-        self.sampling_delay = opts.sampling_delay
+        self.sampling_delay = opts.downsample
         self.frame_counter = -1
         self.num_input_images = num_input_images
         self.id_class_label_map = get_class_labels(opts.categories_path)

@@ -27,7 +27,7 @@ def parse_args():
                         required=True)
 
     # classification related
-    parser.add_argument('--sampling_delay', type=int, default=2,
+    parser.add_argument('--downsample', type=int, default=2,
                         help='Delay in frame sampling')
     parser.add_argument('--output_queue_size', type=int, default=3,
                         help='How many outputs are stored in a queue for filtering outputs')
