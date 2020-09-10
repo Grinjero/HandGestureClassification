@@ -58,32 +58,40 @@ def main():
 
     topK_visualizer = TopKVisualizer(class_map,
                                      top_k=5)
-    fps_visualizer = FPSVisualizer()
-    class_visualizer = ClassifiedClassVisualizer(class_map)
-    image_visualizers = [topK_visualizer, fps_visualizer, class_visualizer]
-    video_visualizer = SyncVideoVisualizer(image_visualizers, ScaleCV2(DISPLAY_SCALE))
+    fps_display_visualizer = FPSVisualizer(y_position=25, fps_name="Display FPS", color=(255, 255, 0))
+    fps_model_visualizer = FPSVisualizer(y_position=50, fps_name="Model frequency", color=(255, 0, 0))
+    class_visualizer = ClassifiedClassVisualizer(class_map, y_position=75)
+    image_visualizers = [topK_visualizer, fps_display_visualizer, fps_model_visualizer, class_visualizer]
+
+    display_spatial_transforms = Compose([
+        ScaleCV2(DISPLAY_SCALE),
+        FLipCV2(1)
+    ])
+    video_visualizer = SyncVideoVisualizer(image_visualizers, display_spatial_transforms)
     activation_processing = ActionActivator(opts, (0, 2))
 
-    fps_measurer = FPSMeasurer()
+    fps_display_measurer = FPSMeasurer()
+    fps_model_measurer = FPSMeasurer()
     while video_capturer.capture_stream():
         clip = video_capturer.read_clip()
         if clip:
             prediction = classifier(clip)
             activated_class = activation_processing(prediction)
 
-            classifier_state = {
+            video_visualizer.update_state({
                 "predictions": prediction,
-                "fps": fps_measurer.fps(),
                 "activated_class": activated_class
-            }
-            video_visualizer.update_state(classifier_state)
+            })
+            fps_model_measurer.operation_complete()
+            fps_model_visualizer.update_fps(fps_model_measurer.fps())
 
         frame = video_capturer.read_frame()
         if video_visualizer.display(frame) is False:
             # not really intuitive but the kill switch of the program is in the visualizer
             break
 
-        fps_measurer.operation_complete()
+        fps_display_measurer.operation_complete()
+        fps_display_visualizer.update_fps(fps_display_measurer.fps())
 
 if __name__ == "__main__":
     main()

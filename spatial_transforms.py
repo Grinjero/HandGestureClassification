@@ -142,6 +142,12 @@ class Normalize(object):
     def randomize_parameters(self):
         pass
 
+class FLipCV2(object):
+    def __init__(self, axis):
+        self.axis = axis
+
+    def __call__(self, image):
+        return cv2.flip(image, self.axis)
 
 class ScaleCV2(object):
     """Rescale the input Image H x W x C to the given size.

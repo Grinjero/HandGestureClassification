@@ -116,25 +116,31 @@ class ImageVisualizer:
 
 
 class FPSVisualizer(ImageVisualizer):
-    def __init__(self, color=(255, 0, 0), alpha=0.6):
+    def __init__(self, color=(255, 0, 0), alpha=0.6, y_position=10, fps_name="FPS"):
         self.color = color
         self.alpha = alpha
+        self.y_position = y_position
         # self.color = color[0], color[1], color[2]
         self.current_fps = None
+        self.fps_name = fps_name
 
     def update_state(self, state_dict):
-        self.current_fps = state_dict["fps"]
+        pass
+
+    def update_fps(self, fps):
+        self.current_fps = fps
 
     def draw_frame(self, frame):
         if self.current_fps is None:
             return frame
 
-        w, h, c = frame.shape
-        x = int(0.9 * w)
-        y = 30
-
-        text = "FPS: {:.3f}".format(self.current_fps)
-        cv2.putText(frame, text, (x, y), fontFace=cv2.FONT_HERSHEY_SIMPLEX,
+        h, w, c = frame.shape
+        x = w - 5
+        text = "{}: {:.3f}".format(self.fps_name, self.current_fps)
+        (label_width, label_height), baseline = cv2.getTextSize(text, fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=0.8,
+                                                                thickness=2)
+        x -= label_width
+        cv2.putText(frame, text, (x, self.y_position), fontFace=cv2.FONT_HERSHEY_SIMPLEX,
                     fontScale=0.8,
                     color=self.color, thickness=2)
 
@@ -178,7 +184,7 @@ class TopKVisualizer(ImageVisualizer):
 
 
 class ClassifiedClassVisualizer(ImageVisualizer):
-    def __init__(self, class_map, label_display_time=1.5, colormap="rainbow"):
+    def __init__(self, class_map, label_display_time=1.5, colormap="rainbow", y_position=30):
         """
         :param class_map: key -> class index, values -> class label
         :param label_display_time: how long the class label will be displayed on screen
@@ -188,7 +194,7 @@ class ClassifiedClassVisualizer(ImageVisualizer):
         self.num_classes = len(class_map.keys())
         self.label_display_time = label_display_time
         self.color_map = plt.get_cmap(colormap)
-
+        self.y_position = y_position
         self.current_class_ind = None
         self.current_class_time_start = None
 
@@ -213,12 +219,14 @@ class ClassifiedClassVisualizer(ImageVisualizer):
 
         duration_since_activation = time.clock() - self.current_class_time_start
         opacity = int(min((duration_since_activation / self.label_display_time) * 255, 255))
-        w, h, c = frame.shape
-        x = int(0.75 * w)
-        y = 60
+        h, w, c = frame.shape
+        x = w
+        label = self.class_map[self.current_class_ind]
+        (label_width, label_height), baseline = cv2.getTextSize(label, fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=0.8, thickness=2)
+        x -= label_width
         color = get_class_color(self.color_map, self.current_class_ind, self.num_classes)
         color = (color[0], color[1], color[2], opacity)
-        cv2.putText(frame, self.class_map[self.current_class_ind], (x, y), fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=0.8,
+        cv2.putText(frame, label, (x, self.y_position), fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=0.8,
                     color=color, thickness=2)
 
         if duration_since_activation > self.label_display_time:

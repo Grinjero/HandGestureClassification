@@ -21,8 +21,6 @@ class ActionActivator:
         :param average_gesture_duration: gesture duration in seconds
         :param n_classes
         """
-
-
         self.output_queue = Queue(opts.output_queue_size)
         assert opts.filter_method in ["median", "mean", "exp"]
         self.filter_method = opts.filter_method
@@ -71,6 +69,9 @@ class ActionActivator:
                 probabilities = self.output_queue.mean_filtering()
             else:
                 probabilities = self.output_queue.exponential_average_filtering()
+
+            max_probability = np.max(probabilities)
+            print(max_probability)
         else:
             probabilities = np.zeros(len(probabilities))
             self.output_queue.enqueue(probabilities)
