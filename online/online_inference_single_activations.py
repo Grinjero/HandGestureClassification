@@ -88,6 +88,7 @@ def main():
         frame = video_capturer.read_frame()
         if video_visualizer.display(frame) is False:
             # not really intuitive but the kill switch of the program is in the visualizer
+            # by pressing q
             break
 
         fps_display_measurer.operation_complete()

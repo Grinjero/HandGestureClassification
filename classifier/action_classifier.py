@@ -13,8 +13,10 @@ class ActionClassifier:
 
     def __init__(self, opts):
         opts.resume_path = opts.model_path
+        opts.no_cuda = False
         self.model, _ = generate_model(opts)
         self.model.eval()
+
 
         self.temporal_transform = OnlineTemporalCrop(opts.sample_duration, opts.downsample)
         # self.spatial_transforms = spatial_transforms

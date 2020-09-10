@@ -142,7 +142,7 @@ if __name__ == '__main__':
             weight_decay=opt.weight_decay,
             nesterov=opt.nesterov)
 
-        scheduler = Scheduler(optimizer, opt, last_epoch=opt.begin_epoch)
+        scheduler = Scheduler(optimizer, opt)
     if not opt.no_val:
         spatial_transform = Compose([
             Scale(opt.sample_size),
@@ -174,7 +174,7 @@ if __name__ == '__main__':
         model.load_state_dict(checkpoint['state_dict'])
 
         if "scheduler" in checkpoint:
-            scheduler.load_state_dict(checkpoint['scheduler'])
+            scheduler.load_state_dict(checkpoint)
         else:
             print("Scheduler state dict not found in the checkpoint file")
 
@@ -183,7 +183,7 @@ if __name__ == '__main__':
     for i in range(opt.begin_epoch, opt.n_epochs + 1):
 
         if not opt.no_train:
-            scheduler.adjust_epoch_begin()
+            scheduler.adjust_learning_rate(i)
             train_epoch(i, train_loader, model, criterion, optimizer, opt, logger)
             state = {
                 'epoch': i,
@@ -208,8 +208,7 @@ if __name__ == '__main__':
                 'scheduler': scheduler.state_dict()
                 }
             save_checkpoint(state, is_best, opt)
-
-            scheduler.adjust_epoch_end(val_loss=validation_loss)
+            scheduler.adjust_learning_rate_validation(i, validation_loss)
 
 
     if opt.test:

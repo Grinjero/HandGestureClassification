@@ -46,7 +46,7 @@ class ActionActivator:
         self.average_gesture_duration = opts.average_gesture_duration
 
     def _weighting_func(self, x):
-        return (1 / (1 + np.exp(self.average_gesture_duration - self.active_time_start)))
+        return 1 / (1 + np.exp((self.average_gesture_duration - self.active_time_start) / 4))
 
     def _set_activator_state(self, activation_state):
         self.active = activation_state

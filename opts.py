@@ -10,6 +10,7 @@ def parse_scheduler(parser:argparse.ArgumentParser):
     parser.add_argument('--lr_patience', type=int, default=10, required=False, help='How many epochs without improving till learning rate is decayed with lr_factor. Usedy by ReduceLROnPlateau')
     parser.add_argument('--lr_steps', default=[30, 45], type=int, nargs="+", metavar='LRSteps', help='Epochs to decay learning rate by lr_factor when using MultiStepLR')
     parser.add_argument('--lr_factor', type=float, default=0.1, required=False)
+    parser.add_argument('--plateau_threshold', type=float, default=0.0001, help="Threshold for measuring the new optimum")
 
 
 def parse_model(parser:argparse.ArgumentParser):

@@ -47,37 +47,94 @@ class Scheduler:
             self.lr_steps = opts.lr_steps
         elif opts.scheduler == "ReduceLROnPlateau":
             self.lr_patience = opts.lr_patience
+            self.threshold = opts.plateau_threshold
         else:
             raise ValueError("Scheduler type {} not supported".format(opts.scheduler))
         print("Using scheduler " + str(opts.scheduler))
         self.scheduler_type = opts.scheduler
 
+        self.validation_losses = []
+        # key -> epoch of adjustment value -> new lr
+        self.lr_history = dict()
+
     def _adjust_learning_rate_multistep(self, epoch):
         lr_new = self.initial_lr * (0.1 ** (sum(epoch >= np.array(self.lr_steps))))
-        for param_group in self.optimizer.param_groups:
-            param_group['lr'] = lr_new
+        self._set_new_lr(epoch, lr_new)
+
+    def _adjust_learning_rate_plateau(self, epoch, current_loss):
+        start_index = len(self.validation_losses) - self.lr_patience
+        if start_index < 0:
+            self.validation_losses.append(current_loss)
+            return
+
+        should_adjust = True
+        for i in range(start_index, len(self.validation_losses)):
+            validation_loss = self.validation_losses[i]
+
+            if (validation_loss + self.threshold) < current_loss:
+                should_adjust = False
+                break
+
+        self.validation_losses.append(current_loss)
+
+        if should_adjust:
+            latest_lr = self._get_latest_lr()
+            new_lr = self.lr_factor * latest_lr
+            self._set_new_lr(epoch, new_lr)
 
     def adjust_learning_rate(self, epoch):
         if self.scheduler_type == "MultiStepLR":
             self._adjust_learning_rate_multistep(epoch)
-        # elif self.scheduler_type == "ReduceLROnPlateau":
-        #     self._adjust_learning_rate_plateau()
+        elif self.scheduler_type == "ReduceLROnPlateau":
+            return
         else:
             raise ValueError("Unsupported scheduler")
 
-    # def adjust_epoch_begin(self):
-    #     if self.scheduler_type == "MultiStepLR":
-    #         self.scheduler.step()
-    #
-    # def adjust_epoch_end(self, val_loss):
-    #     if self.scheduler_type == "ReduceLROnPlateau":
-    #         self.scheduler.step(val_loss)
-    #
-    # def state_dict(self):
-    #     return self.scheduler.state_dict()
-    #
-    # def load_state_dict(self, state_dict):
-    #     self.scheduler.load_state_dict(state_dict)
+    def adjust_learning_rate_validation(self, epoch, validation_loss):
+        if self.scheduler_type == "MultiStepLR":
+            return
+        elif self.scheduler_type == "ReduceLROnPlateau":
+            self._adjust_learning_rate_plateau(epoch, validation_loss)
+        else:
+            raise ValueError("Unsupported scheduler")
+
+    def _get_latest_lr(self):
+        if len(self.lr_history) == 0:
+            return self.initial_lr
+        else:
+            latest_epoch = max(self.lr_history.keys())
+            return self.lr_history[latest_epoch]
+
+    def _set_new_lr(self, epoch, new_lr):
+        for param_group in self.optimizer.param_groups:
+            param_group['lr'] = new_lr
+
+        self.lr_history[epoch] = new_lr
+
+    def state_dict(self):
+        scheduler_state = {
+            "validation_losses": self.validation_losses,
+            "lr_history": self.lr_history
+        }
+        return scheduler_state
+
+    def load_state_dict(self, state_dict):
+        if "scheduler" not in state_dict:
+            print("Scheduler state dict not found")
+            return
+
+        scheduler_state = state_dict["scheduler"]
+        if "validation_losses" not in scheduler_state:
+            print("Validation losses not found scheduler state dict")
+        else:
+            print("Loaded validation losses from scheduler state dict")
+            self.validation_losses = scheduler_state["validation_losses"]
+
+        if "lr_history" not in scheduler_state:
+            print("Lr history not found scheduler state dict")
+        else:
+            print("Loaded lr history from scheduler state dict")
+            self.lr_history = scheduler_state["lr_history"]
 
 class Logger(object):
 
