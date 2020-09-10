@@ -37,8 +37,11 @@ class OnlineClassifier:
         self._init_output_queue(opts.output_queue_size)
 
 
+
+
     def _init_model(self, opts):
-        opts.n_classes = len(self.id_class_label_map)
+        self.n_classes = len(self.id_class_label_map)
+        opts.n_classes = self.n_classes
         opts.sample_size = self.num_input_images
         opts.resume_path = opts.model_path
         self.model, _ = generate_model(opts)
@@ -49,10 +52,10 @@ class OnlineClassifier:
         print(torch.cuda.get_device_name(device_ind))
 
     def _init_image_queue(self, num_input_images, input_image_shape):
-        self.image_queue = Queue(num_input_images, input_image_shape, is_tensor=True)
+        self.image_queue = Queue(num_input_images)
 
     def _init_output_queue(self, output_queue_size):
-        self.output_queue = Queue(output_queue_size, (len(self.id_class_label_map)))
+        self.output_queue = Queue(output_queue_size)
 
     def classification_ready(self):
         # return True
@@ -91,4 +94,5 @@ class OnlineClassifier:
         filtered_label = self.id_class_label_map[top_filtered_class_idx]
         unfiltered_label = self.id_class_label_map[top_unfiltered_class_idx]
         print("Class {}, prob {}".format(unfiltered_label, unfiltered_class_prob))
-        return filtered_class_prob, unfiltered_class_prob, filtered_label, unfiltered_label
+        # return filtered_class_prob, unfiltered_class_prob, filtered_label, unfiltered_label
+        return filtered_probabilites, classifier_probabilities

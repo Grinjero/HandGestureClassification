@@ -1,15 +1,59 @@
+import time
 import atexit
 import threading
 
 import torch
 import matplotlib.pyplot as plt
 import cv2
-import time
-
-from datasets.dataset_utils import get_class_labels
 
 
-class VideoVisualizer:
+def get_class_color(color_map, class_id, num_classes):
+    """
+    Get color for a class id.
+    Args:
+        class_id (int): class id.
+    """
+    rgb = color_map(class_id / num_classes)[:3]
+    bgr = int(rgb[2] * 255), int(rgb[1] * 255), int(rgb[0] * 255)
+    return bgr
+
+
+class SyncVideoVisualizer:
+    def __init__(self, image_visualizers, display_spatial_transforms=None):
+        """
+        :param image_visualizers: List of image visualizers that will draw on the input image (be careful that they
+        don't draw over each other)
+        :param display_spatial_transforms: Spatial transform or a Compose
+        """
+        self.image_visualizers = image_visualizers
+        self.display_spatial_transforms = display_spatial_transforms
+
+    def display(self, frame):
+        """
+        :return: False if user pressed q to shut down
+        """
+        if self.display_spatial_transforms:
+            frame = self.display_spatial_transforms(frame)
+
+        self._draw_visualizers(frame)
+
+        cv2.imshow("GestureClassification", frame)
+
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            return False
+        return True
+
+    def _draw_visualizers(self, frame):
+        for image_visualizer in self.image_visualizers:
+            image_visualizer.draw_frame(frame)
+        return frame
+
+    def update_state(self, state_dict):
+        for image_visualizer in self.image_visualizers:
+            image_visualizer.update_state(state_dict)
+
+
+class AsyncVideoVisualizer:
     def __init__(self, video_capturer, image_visualizers):
         """
         :param video_capturer:
@@ -43,7 +87,7 @@ class VideoVisualizer:
 
     def _draw_visualizers(self, frame):
         for image_visualizer in self.image_visualizers:
-            frame = image_visualizer.draw_frame(frame)
+            image_visualizer.draw_frame(frame)
         return frame
 
     def start(self):
@@ -89,31 +133,22 @@ class FPSVisualizer(ImageVisualizer):
         y = 30
 
         text = "FPS: {:.3f}".format(self.current_fps)
-        return cv2.putText(frame, text, (x, y), fontFace=cv2.FONT_HERSHEY_SIMPLEX,
-                fontScale=0.8,
-                color=self.color, thickness=2)
+        cv2.putText(frame, text, (x, y), fontFace=cv2.FONT_HERSHEY_SIMPLEX,
+                    fontScale=0.8,
+                    color=self.color, thickness=2)
+
 
 class TopKVisualizer(ImageVisualizer):
-    def __init__(self, num_classes, class_names_path, top_k=1, colormap="rainbow", alpha=0.6, start_position=(10, 20)):
+    def __init__(self, class_map, top_k=1, colormap="rainbow", alpha=0.6, start_position=(10, 20)):
         super().__init__()
-        self.num_classes = num_classes
-        self.class_map = get_class_labels(class_names_path)
+        self.num_classes = len(class_map.keys())
+        self.class_map = class_map
         self.color_map = plt.get_cmap(colormap)
         self.top_k = top_k
         self.alpha = alpha
         self.start_position=start_position
 
         self.current_preds = None
-
-    def _get_color(self, class_id):
-        """
-        Get color for a class id.
-        Args:
-            class_id (int): class id.
-        """
-        rgb = self.color_map(class_id / self.num_classes)[:3]
-        bgr = int(rgb[2] * 255), int(rgb[1] * 255), int(rgb[0] * 255)
-        return bgr
 
     def update_state(self, state_dict):
         predictions = state_dict["predictions"]
@@ -131,13 +166,61 @@ class TopKVisualizer(ImageVisualizer):
 
         x, y = self.start_position
         for i in range(self.top_k):
-            color = self._get_color(top_classes[i])
+            color = get_class_color(self.color_map, top_classes[i], self.num_classes)
             class_name = self.class_map[top_classes[i]]
             text = "{} {:.6f}".format(class_name, top_scores[i])
 
-            frame = cv2.putText(frame, text, (x, y), fontFace=cv2.FONT_HERSHEY_SIMPLEX,
-                fontScale=0.5, color=color, thickness=2)
+            cv2.putText(frame, text, (x, y), fontFace=cv2.FONT_HERSHEY_SIMPLEX,
+                        fontScale=0.5, color=color, thickness=2)
 
             y += 30
 
-        return frame
+
+class ClassifiedClassVisualizer(ImageVisualizer):
+    def __init__(self, class_map, label_display_time=1, colormap="rainbow"):
+        """
+        :param class_map: key -> class index, values -> class label
+        :param label_display_time: how long the class label will be displayed on screen
+        """
+
+        self.class_map = class_map
+        self.num_classes = len(class_map.keys())
+        self.label_display_time = label_display_time
+        self.colormap = colormap
+
+        self.current_class = None
+        self.current_class_time_start = None
+
+    def set_current_class(self, class_ind):
+        self.current_class = self.class_map[class_ind]
+        self.current_class_time_start = time.process_time()
+
+    def deset_current_class(self):
+        self.current_class = None
+        self.current_class_time_start = None
+
+    def update_state(self, state_dict):
+        if "activated_class" in state_dict and state_dict["activated_class"] is not None:
+            current_class = state_dict["activated_class"]
+            self.set_current_class(current_class)
+
+            del state_dict["activate_class"]
+
+    def draw_frame(self, frame):
+        if self.current_class is None:
+            return
+
+        duration_since_activation = time.process_time() - self.current_class_time_start
+        opacity = min((duration_since_activation / self.label_display_time) * 255, 255)
+
+        w, h, c = frame.shape
+        x = int(0.9 * w)
+        y = 45
+        color = get_class_color(self.colormap, self.current_class, self.num_classes)
+        color = (color[0], color[1], color[2], opacity)
+        cv2.putText(frame, self.current_class, (x, y), fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=0.8,
+                    color=color, thickness=2)
+
+        if duration_since_activation > self.label_display_time:
+            self.deset_current_class()
+

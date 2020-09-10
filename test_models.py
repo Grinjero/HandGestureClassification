@@ -98,7 +98,8 @@ if __name__ == "__main__":
         #Scale(opt.sample_size),
         Scale(112),
         CenterCrop(112),
-        ToTensor(opt.norm_value), norm_method
+        ToTensor(1),
+        Normalize([114.7748, 107.7354, 99.475], [1, 1, 1])
         ])
     temporal_transform = TemporalCenterCrop(opt.sample_duration, opt.downsample)
     #temporal_transform = TemporalBeginCrop(opt.sample_duration)
@@ -108,7 +109,7 @@ if __name__ == "__main__":
         opt, spatial_transform, temporal_transform, target_transform)
     data_loader = torch.utils.data.DataLoader(
         validation_data,
-        batch_size=1,
+        batch_size=16,
         shuffle=False,
         num_workers=1,
         pin_memory=True)
@@ -132,14 +133,10 @@ if __name__ == "__main__":
 
     end_time = time.time()
     for i, (inputs, targets) in enumerate(data_loader):
-        if not opt.no_cuda:
-            targets = targets.cuda()
         with torch.no_grad():
-            inputs = Variable(inputs)
-            targets = Variable(targets)
-        outputs = model(inputs).data.cpu()
+            outputs = model(inputs).data.cpu()
         recorder.append(outputs.numpy().copy())
-        prec1, prec5 = calculate_accuracy(outputs, targets.data.cpu(), topk=(1, 5))
+        prec1, prec5 = calculate_accuracy(outputs, targets, topk=(1, 5))
 
         top1.update(prec1, inputs.size(0))
         top5.update(prec5, inputs.size(0))
@@ -153,7 +150,7 @@ if __name__ == "__main__":
                   i + 1,
                   len(data_loader),
                   batch_time=batch_time,
-                  top1 =top1,
+                  top1=top1,
                   top5=top5))
 
     video_pred = [np.argmax(np.mean(x, axis=0)) for x in recorder]

@@ -10,8 +10,10 @@ def median_filtering(queue):
     return np.median(queue, axis=0)
 
 
+
+
 class Queue:
-    def __init__(self, max_size, element_shape, is_tensor=False):
+    def __init__(self, max_size):
         self.queue = deque(maxlen=max_size)
         self.max_size = max_size
 

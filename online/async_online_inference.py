@@ -4,21 +4,22 @@ import time
 from spatial_transforms import *
 from classifier.action_classifier import ActionClassifier
 from classifier.classifier_postprocessing import ClassifierPostprocessing
-from visualization.visualizer import VideoVisualizer, TopKVisualizer, FPSVisualizer
-from utils.video_manager import ReadOnlyVideoManager
+from visualization.visualizer import AsyncVideoVisualizer, TopKVisualizer, FPSVisualizer
+from utils.video_manager import AsyncVideoManager
 
 from online.online_utils import FPSMeasurer
-from opts import parse_input_opts, parse_model_opts
-from online.online_opts import parse_source, parse_paths, parser_preprocessing
+from opts import parse_input, parse_model
+from online.online_opts import parse_source, parse_paths, parse_preprocessing, parse_online
 
 
 def parse_args():
     parser = argparse.ArgumentParser()
     parse_paths(parser)
-    parser_preprocessing(parser)
-    parse_model_opts(parser)
-    parse_input_opts(parser)
+    parse_preprocessing(parser)
+    parse_model(parser)
+    parse_input(parser)
     parse_source(parser)
+    parse_online(parser)
 
     return parser.parse_args()
 
@@ -30,17 +31,23 @@ def main():
         CV2ToPIL("BGR"),
         Scale(opts.smaller_dimension_size),
         CenterCrop(opts.center_crop_size),
-        ToTensor(),
-        Normalize([0, 0, 0], [1, 1, 1])
+        ToTensor(1),
+        Normalize([114.7748, 107.7354, 99.475], [1, 1, 1])
     ])
 
-    classifier = ActionClassifier(opts=opts, spatial_transforms=spatial_transforms)
+    sequence_length = opts.sample_duration * opts.downsample
+
+    classifier = ActionClassifier(opts=opts, )
     if opts.source == "camera":
-        video_capturer = ReadOnlyVideoManager(source=opts.camera_index, num_frames=opts.sample_duration,
-                                              subsampling_rate=opts.downsample)
+        video_capturer = AsyncVideoManager(source=opts.camera_index,
+                                           sequence_length=sequence_length,
+                                           num_frames_skip=opts.skip_frames,
+                                           spatial_transforms=spatial_transforms)
     elif opts.source == "video":
-        video_capturer = ReadOnlyVideoManager(source=opts.video_path, num_frames=opts.sample_duration,
-                                              subsampling_rate=opts.downsample)
+        video_capturer = AsyncVideoManager(source=opts.video_path,
+                                           sequence_length=sequence_length,
+                                           num_frames_skip=opts.skip_frames,
+                                           spatial_transforms=spatial_transforms)
     else:
         raise ValueError("Invalid source")
 
@@ -49,29 +56,26 @@ def main():
                                       top_k=5)
     fps_visualizer = FPSVisualizer()
     image_visualizers = [topK_visualizer, fps_visualizer]
-    video_visualizer = VideoVisualizer(video_capturer, image_visualizers)
-    postprocessing = ClassifierPostprocessing(None)
+    video_visualizer = AsyncVideoVisualizer(video_capturer, image_visualizers)
+    postprocessing = ClassifierPostprocessing(None, None)
 
     fps_measurer = FPSMeasurer()
 
     video_capturer.start()
     video_visualizer.start()
     more_to_come = True
-    pred_counter = 0
     while more_to_come:
         more_to_come, clip = video_capturer.read_clip()
 
-        if clip is None:
+        if clip is None or len(clip) < sequence_length:
             time.sleep(0.02)
             continue
 
         prediction = classifier(clip)
         processed_prediction = postprocessing(prediction)
-        print("Done with prediction " + str(pred_counter))
 
         fps_measurer.operation_complete()
 
-        pred_counter += 1
         classifier_state = {
             "predictions": processed_prediction,
             "fps": fps_measurer.fps()

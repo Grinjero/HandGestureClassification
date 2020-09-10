@@ -4,7 +4,7 @@ import os, importlib
 from glob import glob
 
 
-def parse_scheduler_opts(parser:argparse.ArgumentParser):
+def parse_scheduler(parser:argparse.ArgumentParser):
     parser.add_argument("--scheduler", type=str, choices=["MultiStepLR", "ReduceLROnPlateau"], help="Which scheduler to use (MultiStepLR | ReduceLROnPlateau)", required=True)
 
     parser.add_argument('--lr_patience', type=int, default=10, required=False, help='How many epochs without improving till learning rate is decayed with lr_factor. Usedy by ReduceLROnPlateau')
@@ -12,7 +12,7 @@ def parse_scheduler_opts(parser:argparse.ArgumentParser):
     parser.add_argument('--lr_factor', type=float, default=0.1, required=False)
 
 
-def parse_model_opts(parser:argparse.ArgumentParser):
+def parse_model(parser:argparse.ArgumentParser):
     model_names = load_submodule_arguments(models, parser)
     model_names = [name for name in model_names if name != "__init__"]
     choices = model_names[0]
@@ -49,7 +49,7 @@ def load_submodule_arguments(parent_module, parser):
     return module_names
 
 
-def parse_optimizer_arguments(parser):
+def parse_optimizer(parser):
     parser.add_argument('--momentum', default=0.9, type=float, help='Momentum')
     parser.add_argument('--dampening', default=0.9, type=float, help='dampening of SGD')
     parser.add_argument('--weight_decay', default=1e-3, type=float, help='Weight Decay')
@@ -59,7 +59,7 @@ def parse_optimizer_arguments(parser):
     parser.add_argument('--learning_rate', default=0.1, type=float, help='Initial learning rate')
 
 
-def parse_input_opts(parser):
+def parse_input(parser):
     parser.add_argument('--n_classes', default=400, type=int, help='Number of classes (activitynet: 200, kinetics: 400, ucf101: 101, hmdb51: 51)')
     parser.add_argument('--modality', default='RGB', type=str, help='Modality of input data. RGB, Flow or RGBFlow')
     parser.add_argument('--sample_size', default=112, type=int, help='Height and width of inputs')
@@ -110,10 +110,10 @@ def parse_opts():
     parser.add_argument('--model_depth', default=18, type=int, help='Depth of resnet (10 | 18 | 34 | 50 | 101)')
     parser.add_argument('--manual_seed', default=1, type=int, help='Manually set random seed')
 
-    parse_input_opts(parser)
-    parse_scheduler_opts(parser)
-    parse_model_opts(parser)
-    parse_optimizer_arguments(parser)
+    parse_input(parser)
+    parse_scheduler(parser)
+    parse_model(parser)
+    parse_optimizer(parser)
 
     args = parser.parse_args()
 

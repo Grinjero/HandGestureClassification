@@ -4,13 +4,15 @@ import time
 import os
 from torch import Tensor
 
-from opts import parse_model_opts
+from datasets.dataset_utils import get_class_labels
+from opts import parse_model
 from spatial_transforms import *
 from online.online_classifier import OnlineClassifier
 from online.online_utils import FPSMeasurer, ImageStreamer
 from visualization.stream_utils import *
+from visualization.plotters import ResultPlotter
 
-DISPLAY_SCALE = 480
+DISPLAY_SCALE = 600
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -27,15 +29,18 @@ def parse_args():
     # classification related
     parser.add_argument('--sampling_delay', type=int, default=2,
                         help='Delay in frame sampling')
-    parser.add_argument('--output_queue_size', type=int, default=4,
+    parser.add_argument('--output_queue_size', type=int, default=3,
                         help='How many outputs are stored in a queue for filtering outputs')
-    parser.add_argument('--classification_thresh', type=float, default=0.2,
+    parser.add_argument('--classification_thresh', type=float, default=0.7,
                         help='Minimal difference between top 2 probabilities needed to classify as gesture')
 
+
+    parser.add_argument('--plot', action='store_true', default=False, help='Should the results be plotted')
     # image preprocessing related
     parser.add_argument('--smaller_dimension_size', type=int, default=120)
     parser.add_argument('--center_crop_size', type=int, default=112)
 
+    parser.add_argument('--output_file', type=str, default="", help='Leave empty for no output video')
     # camera, video or image (if directory containing extracted frames) stream
     subparsers = parser.add_subparsers(dest="stream_type", help='Choose between image stream, video stream or camera stream', required=True)
     # camera
@@ -51,7 +56,7 @@ def parse_args():
     image_subparser.add_argument('--fps', type=int, default=30, help="FPS of the original video")
     image_subparser.add_argument('--output_fps', type=int, default=30, help="FPS of the output video")
 
-    parse_model_opts(parser)
+    parse_model(parser)
     return parser.parse_args()
 
 
@@ -89,17 +94,29 @@ def main():
     previous_unfiltered_class_prob = 0
     previous_filtered_label = None
     previous_unfiltered_label = None
+    id_class_label_map = get_class_labels(args.categories_path)
 
     cv2.namedWindow("Stream")
     cv2.moveWindow("Stream", 200, 400)
     cv2.namedWindow("Augmented stream")
     cv2.moveWindow("Augmented stream", 1000, 400)
 
+    ret, frame = cap.read()
+    display_scale = ScaleCV2(DISPLAY_SCALE)
+    disp_frame = display_scale(frame)
+    h, w, c = disp_frame.shape
+    if args.output_file:
+        fourcc = cv2.VideoWriter_fourcc(*'XVID')
+        video_name = args.output_file
+        video_path = "result_videos/" + video_name +".avi"
+        out = cv2.VideoWriter(video_path, fourcc, 12, (w, h))
+    if args.plot:
+        plotter = ResultPlotter(classifier.n_classes, prediction_names=("raw", "filtered"), x_size=400)
     stop = False
     delay = 1000 / args.fps
     frame_counter = 0
-    display_scale = ScaleCV2(600)
-    while (cap.isOpened() and stop is False):
+
+    while cap.isOpened() and stop is False:
         frame_start_time = time.process_time()
         ret, frame = cap.read()
 
@@ -115,27 +132,51 @@ def main():
         display_h, display_w, display_c = disp_frame.shape
         display_dimensions(disp_frame, (15, 25), original_frame.shape, (255, 0, 0))
 
-        classification_result = classifier(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
-        if classification_result is None:
-            filtered_class_prob, unfiltered_class_prob, filtered_label, unfiltered_label = previous_filtered_class_prob, previous_unfiltered_class_prob, previous_filtered_label, previous_unfiltered_label
+        classifier_output = classifier(frame)
+        # filtered_probabilites, classifier_probabilities = classifier(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
+        # if classification_result is None:
+        #     filtered_class_prob, unfiltered_class_prob, filtered_label, unfiltered_label = previous_filtered_class_prob, previous_unfiltered_class_prob, previous_filtered_label, previous_unfiltered_label
+        # else:
+        #     filtered_class_prob, unfiltered_class_prob, filtered_label, unfiltered_label = classification_result
+        #
+        # previous_filtered_class_prob, previous_unfiltered_class_prob, previous_filtered_label, previous_unfiltered_label = filtered_class_prob, unfiltered_class_prob, filtered_label, unfiltered_label
+        #
+        if classifier_output is None:
+            filtered_class_prob, classifier_probabilities, filtered_label, unfiltered_label = previous_filtered_class_prob, previous_unfiltered_class_prob, previous_filtered_label, previous_unfiltered_label
         else:
-            filtered_class_prob, unfiltered_class_prob, filtered_label, unfiltered_label = classification_result
+            filtered_probabilites, classifier_probabilities = classifier_output
+
+            top_filtered_class_idx = np.argmax(filtered_probabilites)
+            filtered_class_prob = filtered_probabilites[top_filtered_class_idx]
+
+            top_unfiltered_class_idx = np.argmax(classifier_probabilities)
+            unfiltered_class_prob = classifier_probabilities[top_unfiltered_class_idx]
+
+            filtered_label = id_class_label_map[top_filtered_class_idx]
+            unfiltered_label = id_class_label_map[top_unfiltered_class_idx]
+
+            if args.plot:
+                plot_input = {
+                    "filtered": filtered_probabilites,
+                    "raw": classifier_probabilities
+                }
+                plotter(plot_input)
 
         previous_filtered_class_prob, previous_unfiltered_class_prob, previous_filtered_label, previous_unfiltered_label = filtered_class_prob, unfiltered_class_prob, filtered_label, unfiltered_label
 
-        display_class_probability(disp_frame, (15, 50), filtered_class_prob, filtered_label, "Filtered", (255, 0, 255))
-        display_class_probability(disp_frame, (15, 100), unfiltered_class_prob, unfiltered_label, "Raw", (255, 255, 0))
+        if filtered_class_prob > args.classification_thresh:
+            display_class_probability(disp_frame, (15, 50), filtered_class_prob, filtered_label, "Filtered", (255, 0, 255))
+            display_class_probability(disp_frame, (15, 100), unfiltered_class_prob, unfiltered_label, "Raw", (255, 255, 0))
 
         fps_measurer.operation_complete()
         display_framerate(disp_frame, (int(0.8 * display_w), 25), fps_measurer.fps(), (0, 255, 255))
 
         cv2.imshow("Augmented stream", augmented_image)
         cv2.imshow("Stream", disp_frame)
+        if args.output_file:
+            out.write(disp_frame)
 
-        # while (time.process_time() - frame_start_time < delay):
-        #     cv2.waitKey(1)
-
-        # fraction of second
+        # maintain consistent display framerate
         duration = time.process_time() - frame_start_time
         wait_time = int(delay - duration)
         if cv2.waitKey(wait_time) & 0xFF == ord('q'):
@@ -150,6 +191,8 @@ def main():
     cap.release()
     cv2.destroyAllWindows()
 
+    if args.output_file:
+        out.release()
 
 if __name__ == "__main__":
     main()
