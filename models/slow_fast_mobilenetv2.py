@@ -111,7 +111,7 @@ class SlowFastMobileNetV2(nn.Module):
         self.avg = nn.AdaptiveAvgPool3d((1, 1, 1))
         # building classifier
         self.classifier = nn.Sequential(
-            nn.Dropout(0.5),
+            nn.Dropout(0.2),
             nn.Linear(self.fused_last_channel, num_classes),
         )
 

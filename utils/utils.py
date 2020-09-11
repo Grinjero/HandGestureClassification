@@ -59,7 +59,7 @@ class Scheduler:
 
     def _adjust_learning_rate_multistep(self, epoch):
         lr_new = self.initial_lr * (0.1 ** (sum(epoch >= np.array(self.lr_steps))))
-        self._set_new_lr(epoch, lr_new)
+        self._set_new_lr(lr_new, epoch)
 
     def _adjust_learning_rate_plateau(self, epoch, current_loss):
         self.validation_losses.append(current_loss)
@@ -75,7 +75,7 @@ class Scheduler:
         if min_loss_ind < start_index:
             latest_lr = self._get_latest_lr()
             new_lr = self.lr_factor * latest_lr
-            self._set_new_lr(epoch, new_lr)
+            self._set_new_lr(new_lr, epoch)
 
         # if should_adjust:
         #     latest_lr = self._get_latest_lr()
@@ -111,11 +111,12 @@ class Scheduler:
             latest_epoch = max(self.lr_history.keys())
             return self.lr_history[latest_epoch]
 
-    def _set_new_lr(self, epoch, new_lr):
+    def _set_new_lr(self, new_lr, epoch=None):
         for param_group in self.optimizer.param_groups:
             param_group['lr'] = new_lr
 
-        self.lr_history[epoch] = new_lr
+        if epoch:
+            self.lr_history[epoch] = new_lr
 
     def state_dict(self):
         scheduler_state = {
@@ -141,6 +142,9 @@ class Scheduler:
         else:
             print("Loaded lr history from scheduler state dict")
             self.lr_history = scheduler_state["lr_history"]
+
+        # restore previous lr
+        self._set_new_lr(self._get_latest_lr())
 
 class Logger(object):
 
