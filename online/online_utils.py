@@ -55,9 +55,9 @@ class Queue:
 
     # Exponential average
     def exponential_average_filtering(self):
-        weights = np.exp(np.linspace(-1., 0., self.max_size))
+        weights = np.exp(np.linspace(-1., 0., len(self.queue)))
         weights /= weights.sum()
-        average = weights.reshape(1, self.max_size).dot(self.to_array())
+        average = weights.reshape(1, len(self.queue)).dot(self.to_array())
         return average.reshape(average.shape[1], )
 
 
@@ -72,6 +72,8 @@ class FPSMeasurer:
         self.first_second = True
         self.op_start_time = time.monotonic_ns()
 
+        self._last_duration = 1
+
     def operation_complete(self):
         time_now = time.monotonic_ns()
 
@@ -80,6 +82,7 @@ class FPSMeasurer:
         self._update_avg_fps()
 
     def _update_avg_duration(self, op_duration):
+        self._last_duration = op_duration
         self._avg_duration = 0.98 * self._avg_duration + 0.02 * op_duration
 
     def _update_avg_fps(self):
@@ -97,7 +100,7 @@ class FPSMeasurer:
 
     def fps(self):
         if self.first_second:
-            return 1 / self._avg_duration
+            return 1 / self._last_duration
         else:
             return self._avg_fps
 

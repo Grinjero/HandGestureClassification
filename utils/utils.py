@@ -62,25 +62,25 @@ class Scheduler:
         self._set_new_lr(epoch, lr_new)
 
     def _adjust_learning_rate_plateau(self, epoch, current_loss):
+        self.validation_losses.append(current_loss)
         start_index = len(self.validation_losses) - self.lr_patience
         if start_index < 0:
-            self.validation_losses.append(current_loss)
+            return
+        if (epoch - self.lr_patience) < self._get_latest_epoch_change():
             return
 
-        should_adjust = True
-        for i in range(start_index, len(self.validation_losses)):
-            validation_loss = self.validation_losses[i]
-
-            if (validation_loss + self.threshold) < current_loss:
-                should_adjust = False
-                break
-
-        self.validation_losses.append(current_loss)
-
-        if should_adjust:
+        # should_adjust = True
+        min_loss_ind = np.argmin(self.validation_losses)
+        # min_loss = self.validation_losses[min_loss_ind]
+        if min_loss_ind < start_index:
             latest_lr = self._get_latest_lr()
             new_lr = self.lr_factor * latest_lr
             self._set_new_lr(epoch, new_lr)
+
+        # if should_adjust:
+        #     latest_lr = self._get_latest_lr()
+        #     new_lr = self.lr_factor * latest_lr
+        #     self._set_new_lr(epoch, new_lr)
 
     def adjust_learning_rate(self, epoch):
         if self.scheduler_type == "MultiStepLR":
@@ -97,6 +97,12 @@ class Scheduler:
             self._adjust_learning_rate_plateau(epoch, validation_loss)
         else:
             raise ValueError("Unsupported scheduler")
+
+    def _get_latest_epoch_change(self):
+        if len(self.lr_history) == 0:
+            return 0
+        else:
+            return max(self.lr_history.keys())
 
     def _get_latest_lr(self):
         if len(self.lr_history) == 0:
@@ -184,6 +190,7 @@ def calculate_accuracy(output, target, topk=(1,)):
 def save_checkpoint(state, is_best, opt):
     torch.save(state, '%s/%s_checkpoint.pth' % (opt.result_path, opt.store_name))
     if is_best:
+        print("Saving new best")
         shutil.copyfile('%s/%s_checkpoint.pth' % (opt.result_path, opt.store_name),'%s/%s_best.pth' % (opt.result_path, opt.store_name))
 
 

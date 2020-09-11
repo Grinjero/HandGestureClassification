@@ -18,6 +18,7 @@ def parse_activator(parser):
     parser.add_argument('--average_gesture_duration', type=float, default=3, help='Average duration of gestures in seconds')
     parser.add_argument('--early_threshold', type=float, default=0.9)
     parser.add_argument('--late_threshold', type=float, default=0.15, help='Threshold for the dff')
+    parser.add_argument('--cumulative_method', type=str, default="timed")
 
 def parse_source(parser):
     parser.add_argument('--output_fps', type=int, default=-1, help="FPS of the output video")
