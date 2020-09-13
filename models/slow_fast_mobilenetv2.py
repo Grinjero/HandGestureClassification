@@ -108,7 +108,6 @@ class SlowFastMobileNetV2(nn.Module):
         self._make_slow_pathway(block)
 
         self.fused_last_channel = self.fast_last_channel + self.slow_last_channel
-        self.avg = nn.AdaptiveAvgPool3d((1, 1, 1))
         # building classifier
         self.classifier = nn.Sequential(
             nn.Dropout(0.2),
@@ -228,7 +227,7 @@ class SlowFastMobileNetV2(nn.Module):
             x = fast_section(x)
 
         out = self.fast_last_layer(x)
-        out = self.avg(out)
+        out = F.avg_pool3d(out, out.data.size()[-3:])
         out = out.view(-1, self.fast_last_channel)
         return out, laterals
 
@@ -248,7 +247,7 @@ class SlowFastMobileNetV2(nn.Module):
             x = slow_section(x)
 
         out = self.slow_last_layer(x)
-        out = self.avg(out)
+        out = F.avg_pool3d(out, out.data.size()[-3:])
         out = out.view(-1, self.slow_last_channel)
 
         return out
