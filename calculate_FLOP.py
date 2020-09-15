@@ -1,6 +1,6 @@
 import torch.nn as nn
 from thop import profile
-from models import mobilenet, mobilenetv2, c3d, resnet, slow_fast_mobilenetv2
+from models import mobilenet, mobilenetv2, c3d, resnet, slow_fast_mobilenetv2, slow_mobilenetv2, fast_mobilenetv2
 
 # %%%%%%%%--------------------- SELECT THE MODEL BELOW ---------------------%%%%%%%%
 
@@ -26,8 +26,11 @@ from models import mobilenet, mobilenetv2, c3d, resnet, slow_fast_mobilenetv2
 # model = resnet.resnet50( num_classes=600, shortcut_type='A', sample_size=112, sample_duration=16)
 # model = resnet.resnet101( num_classes=600, shortcut_type='A', sample_size=112, sample_duration=16)
 # model = c3d.get_model( num_classes=600, sample_size=112, sample_duration=16)
-model = slow_fast_mobilenetv2.get_model(num_classes=600)
-model = model.cuda()
+
+# model = slow_fast_mobilenetv2.get_model(num_classes=17, sample_size=112)
+# model = slow_mobilenetv2.get_model(num_classes=17, sample_size=112, width_mult=1.)
+# model = fast_mobilenetv2.get_model(num_classes=17, sample_size=112)
+model = mobilenetv2.get_model(num_classes=17, sample_size=112)
 # model = nn.DataParallel(model, device_ids=None)
 print(model)
 

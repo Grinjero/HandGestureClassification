@@ -146,8 +146,8 @@ class SlowFastMobileNetV2(nn.Module):
                 lateral_output_channels = input_channel * self.fusion_conv_channel_ratio
                 self.lateral_connections_channels.append(lateral_output_channels)
                 lateral_block = block(input_channel, lateral_output_channels,
-                          stride=(self.alpha, 1, 1),  expand_ratio=t, depthwise_kernel_size=(self.fusion_kernel_size, 1, 1),
-                          padding=(self.fusion_kernel_size // 2, 0, 0))
+                                      stride=(self.alpha, 1, 1),  expand_ratio=t, depthwise_kernel_size=(self.fusion_kernel_size, 1, 1),
+                                      padding=(self.fusion_kernel_size // 2, 0, 0))
                 self.lateral_connections.append(lateral_block)
             else:
                 self.lateral_connections_channels.append(None)
@@ -233,7 +233,7 @@ class SlowFastMobileNetV2(nn.Module):
 
     def _forward_slow(self, slow_x, laterals):
         """
-        :param slow_x: subsamples frames for slow
+        :param slow_x: subsampled frames for slow
         :param laterals:
         :return:
         """
@@ -352,7 +352,7 @@ if __name__ == "__main__":
     model.eval()
     print(str(model) + "\n\n\n")
     # BATCH X CHANNELS X NUM_FRAMES X W X H
-    input_var = torch.randn(4, 3, 16, 112, 112).cuda()
+    input_var = torch.randn(1, 3, 16, 112, 112).cuda()
 
     time_start = time.perf_counter()
     with torch.no_grad():

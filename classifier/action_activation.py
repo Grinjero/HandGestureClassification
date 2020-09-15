@@ -35,8 +35,10 @@ class ActionActivator:
             self.cumulative_method = "timed"
 
         if self.cumulative_method == "timed":
-            self.average_gesture_duration = opts.average_gesture_duration
+            print("Using timed accumulation")
+            self.average_gesture_duration = opts.average_gesture_duration / 4
         elif self.cumulative_method == "step":
+            print("Using step accumulation")
             self.average_gesture_duration = opts.average_gesture_duration / (4 * opts.skip_frames)
 
         # is a gesture currently detected
@@ -63,7 +65,7 @@ class ActionActivator:
         self.late_threshold = opts.late_threshold
 
     def _weighting_time_func(self, current_time):
-        return 1 / (1 + np.exp((self.average_gesture_duration / 4 - current_time)))
+        return 1 / (1 + np.exp((self.average_gesture_duration- current_time)))
 
     def _weighting_step_func(self, current_step):
         return 1 / (1 + np.exp(-0.2 * (current_step - self.average_gesture_duration)))
@@ -99,22 +101,22 @@ class ActionActivator:
             self.passive_count = 0
 
             if self.filter_method == "median":
-                probabilities = self.output_queue.median_filtering()
+                self.filtered_probabilities = self.output_queue.median_filtering()
             elif self.filter_method == "mean":
-                probabilities = self.output_queue.mean_filtering()
+                self.filtered_probabilities = self.output_queue.mean_filtering()
             else:
-                probabilities = self.output_queue.exponential_average_filtering()
+                self.filtered_probabilities = self.output_queue.exponential_average_filtering()
 
-            max_probability = np.max(probabilities)
+            max_probability = np.max(self.filtered_probabilities)
             print(max_probability)
         else:
-            probabilities = np.zeros(len(probabilities))
+            self.filtered_probabilities = np.zeros(len(probabilities))
             self.output_queue.enqueue(probabilities)
 
             self.passive_count += 1
 
 
-        return probabilities
+        return self.filtered_probabilities
 
     def _calculate_timed_cum_sum(self, current_step_time, probabilities):
         # cumulative sum taking into account the duration of each step
@@ -188,7 +190,7 @@ class ActionActivator:
             best_idx = self.cum_sum.argmax()
 
             if self.early_predict:
-                if best_idx != self.previous_best_idx and self.cum_sum[best_idx] > self.early_threshold:
+                if best_idx != self.previous_best_idx and self.cum_sum[best_idx] > self.late_threshold:
                     print("Early detection: class {} prob {:.5f}".format(best_idx, self.cum_sum[best_idx]))
                     activated_class = best_idx
             elif self.cum_sum[best_idx] > self.late_threshold:

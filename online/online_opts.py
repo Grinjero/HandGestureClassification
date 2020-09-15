@@ -1,7 +1,18 @@
-def parse_paths(parser):
-    parser.add_argument('--categories_path', type=str,
-                        help='File containing class indices and their names, \'annotation_Jester/categories.txt\' or \'annotation_Jester/classInd.txt\'',
-                        required=True)
+import os
+import yaml
+
+def parse_dataset(args):
+    dataset_config_path = args.dataset_config
+    if not os.path.exists(dataset_config_path):
+        raise ValueError("Given dataset config does not exist")
+
+    with open(dataset_config_path, "r") as fd:
+        dataset_config = yaml.load(fd)
+
+    args.contrast_class_indices = dataset_config["CONTRAST_CLASS_INDICES"]
+    args.categories_path = dataset_config["CATEGORIES_PATH"]
+    args.num_classes = dataset_config["NUM_CLASSES"]
+
 
 def parse_preprocessing(parser):
     parser.add_argument('--smaller_dimension_size', type=int, default=120)

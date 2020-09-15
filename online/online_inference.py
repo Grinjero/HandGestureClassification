@@ -111,7 +111,7 @@ def main():
         video_path = "result_videos/" + video_name +".avi"
         out = cv2.VideoWriter(video_path, fourcc, 12, (w, h))
     if args.plot:
-        plotter = ResultPlotter(classifier.n_classes, prediction_names=("raw", "filtered"), x_size=400)
+        plotter = ResultPlotter(classifier.n_classes, prediction_names=("raw", "filtered"), x_size=100)
     stop = False
     delay = 1000 / args.fps
     frame_counter = 0

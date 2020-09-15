@@ -14,7 +14,7 @@ def conv_bn(inp, oup, stride, kernel_size=3, padding=(1, 1, 1)):
     )
 
 class InvertedResidual(nn.Module):
-    def __init__(self, inp, oup, stride, expand_ratio, depthwise_kernel_size=3):
+    def __init__(self, inp, oup, stride, expand_ratio, depthwise_kernel_size=3, padding=(0, 0, 0)):
         super(InvertedResidual, self).__init__()
         self.stride = stride
         self.depthwise_kernel_size = depthwise_kernel_size
@@ -22,10 +22,6 @@ class InvertedResidual(nn.Module):
         hidden_dim = round(inp * expand_ratio)
         self.use_res_connect = self.stride == (1, 1, 1) and inp == oup
 
-        if self.stride[0] == 1 and ((isinstance(depthwise_kernel_size, tuple) and depthwise_kernel_size[0]) == 1):
-            padding = (0, 1, 1)
-        else:
-            padding = (1, 1, 1)
         if expand_ratio == 1:
             self.conv = nn.Sequential(
                 # dw
@@ -56,8 +52,6 @@ class InvertedResidual(nn.Module):
             return x + self.conv(x)
         else:
             return self.conv(x)
-
-
 
 class SlowMobileNetV2(nn.Module):
     """
@@ -92,13 +86,18 @@ class SlowMobileNetV2(nn.Module):
         assert sample_size % 16 == 0.
         input_channel = int(input_channel * width_mult)
         self.last_channel = int(last_channel * width_mult) if width_mult > 1.0 else last_channel
-        self.features = [conv_bn(3, input_channel, (1, 2, 2), kernel_size=(1, 3, 3), padding=(0, 1, 1))]
+        self.features = [conv_bn(3, input_channel, (1, 2, 2))]
         # building inverted residual blocks
         for t, c, n, s, k in interverted_residual_setting:
             output_channel = int(c * width_mult)
             for i in range(n):
                 stride = s if i == 0 else (1, 1, 1)
-                self.features.append(block(input_channel, output_channel, stride, expand_ratio=t, depthwise_kernel_size=k))
+                if isinstance(k, tuple):
+                    padding = (k[0] // 2, k[1] // 2, k[2] // 2)
+                else:
+                    padding = k // 2
+                self.features.append(block(input_channel, output_channel, stride, expand_ratio=t,
+                                           depthwise_kernel_size=k, padding=padding))
                 input_channel = output_channel
         # building last several layers
         self.features.append(conv_1x1x1_bn(input_channel, self.last_channel))
@@ -165,7 +164,7 @@ def define_arguments(model_parameter_map):
     model_parameter_map["width_mult"] = {
         "title": "--width_mult",
         "type": float,
-        "default": 0.2
+        "default": 1
     }
 
 
@@ -182,8 +181,8 @@ if __name__ == "__main__":
     model = model.cuda()
     model.eval()
     print(str(model) + "\n\n\n")
-    # BATCH X CHANNELS X NUM_FRAMES X W X H
-    input_var = torch.randn(4, 3, 16, 112, 112).cuda()
+    # BATCH X CHANNELS X NUM_FRAMES X H X W
+    input_var = torch.randn(1, 3, 16, 112, 112).cuda()
 
     time_start = time.perf_counter()
     with torch.no_grad():

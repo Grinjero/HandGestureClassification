@@ -177,7 +177,7 @@ if __name__ == "__main__":
     model.eval()
     print(str(model) + "\n\n\n")
     # BATCH X CHANNELS X NUM_FRAMES X W X H
-    input_var = torch.randn(4, 3, 16, 112, 112).cuda()
+    input_var = torch.randn(1, 3, 16, 112, 112).cuda()
 
     time_start = time.perf_counter()
     with torch.no_grad():

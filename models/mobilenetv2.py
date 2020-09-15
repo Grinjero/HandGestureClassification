@@ -169,12 +169,12 @@ def get_model(**kwargs):
 
 
 if __name__ == "__main__":
-    model = get_model(num_classes=17, sample_size=112, width_mult=1.)
+    model = get_model(num_classes=17, sample_size=112, width_mult=0.2)
     model = model.cuda()
     print(model)
 
     # BATCH X CHANNELS X NUM_FRAMES X W X H
-    input_var = torch.randn(4, 3, 16, 112, 112).cuda()
+    input_var = torch.randn(1, 3, 16, 112, 112).cuda()
 
     time_start = time.perf_counter()
     with torch.no_grad():

@@ -1,22 +1,24 @@
 import argparse
+import yaml
+import os
 
 from classifier.action_classifier import ActionClassifier
 from datasets.dataset_utils import get_class_labels
 from spatial_transforms import *
+from visualization.plotters import ResultPlotter
 from visualization.visualizer import SyncVideoVisualizer, TopKVisualizer, FPSVisualizer, ClassifiedClassVisualizer
 from utils.video_manager import SyncVideoManager
 from online.online_opts import *
 from online.online_utils import FPSMeasurer
 from classifier.action_activation import ActionActivator
 from opts import parse_input, parse_model
-from online.online_opts import parse_source, parse_paths, parse_preprocessing, parse_online
+from online.online_opts import parse_source, parse_dataset, parse_preprocessing, parse_online
 
 DISPLAY_SCALE = 600
 
 def parse_args():
     parser = argparse.ArgumentParser()
 
-    parse_paths(parser)
     parse_source(parser)
     parse_online(parser)
     parse_activator(parser)
@@ -24,7 +26,11 @@ def parse_args():
     parse_model(parser)
     parse_input(parser)
 
-    return parser.parse_args()
+    parser.add_argument('--plot', action="store_true", default=False, help="Plotting in real time")
+    parser.add_argument('--dataset_config', type=str, default="annotation_Jester\Jester.yaml", help="Path to the dataset config")
+    args = parser.parse_args()
+    parse_dataset(args)
+    return args
 
 
 def main():
@@ -55,6 +61,9 @@ def main():
     else:
         raise ValueError("Invalid source")
 
+    if opts.plot:
+        plotter = ResultPlotter(opts.n_classes, prediction_names=("Predikcije", "Filtrirane", "Otežane"),
+                                x_size=100)
 
     topK_visualizer = TopKVisualizer(class_map,
                                      top_k=5)
@@ -68,7 +77,7 @@ def main():
         FLipCV2(1)
     ])
     video_visualizer = SyncVideoVisualizer(image_visualizers, display_spatial_transforms)
-    activation_processing = ActionActivator(opts, (0, 2))
+    activation_processing = ActionActivator(opts, opts.contrast_class_indices)
 
     fps_display_measurer = FPSMeasurer()
     fps_model_measurer = FPSMeasurer()
@@ -78,12 +87,20 @@ def main():
             prediction = classifier(clip)
             activated_class = activation_processing(prediction)
 
-            video_visualizer.update_state({
+            classifier_state = {
                 "predictions": prediction,
                 "activated_class": activated_class
-            })
+            }
+            video_visualizer.update_state(classifier_state)
             fps_model_measurer.operation_complete()
             fps_model_visualizer.update_fps(fps_model_measurer.fps())
+
+            if opts.plot:
+                plotter({
+                    "Predikcije": prediction,
+                    "Filtrirane": activation_processing.filtered_probabilities,
+                    "Otežane": activation_processing.weighted_probability
+                }, activated_class)
 
         frame = video_capturer.read_frame()
         if video_visualizer.display(frame) is False:
