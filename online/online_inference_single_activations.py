@@ -69,7 +69,7 @@ def main():
                                      top_k=5)
     fps_display_visualizer = FPSVisualizer(y_position=25, fps_name="Display FPS", color=(255, 255, 0))
     fps_model_visualizer = FPSVisualizer(y_position=50, fps_name="Model frequency", color=(255, 0, 0))
-    class_visualizer = ClassifiedClassVisualizer(class_map, y_position=75)
+    class_visualizer = ClassifiedClassVisualizer(class_map, y_position=85)
     image_visualizers = [topK_visualizer, fps_display_visualizer, fps_model_visualizer, class_visualizer]
 
     display_spatial_transforms = Compose([

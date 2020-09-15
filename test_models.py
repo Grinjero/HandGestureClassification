@@ -8,6 +8,8 @@ import numpy as np
 import torch
 from torch.autograd import Variable
 from sklearn.metrics import confusion_matrix
+import pandas as pd
+import csv
 from torch.nn import functional as F
 
 from opts import parse_opts
@@ -42,6 +44,17 @@ def calculate_accuracy(outputs, targets, topk=(1,)):
     return ret
 """
 
+
+def save_predictions(y_y_predictions):
+    file_name = "test_results_{}.csv".format(opt.model)
+    with open(file_name, "w") as fd:
+        csv_out = csv.writer(fd)
+        csv_out.writerow(["y_true", "y_predicted"])
+        for pair in y_y_predictions:
+            y_true = pair[0]
+            y_pred = pair[1]
+            for i in range(len(y_true)):
+                csv_out.writerow((y_true[i], y_pred[i]))
 
 
 def calculate_accuracy(outputs, targets, topk=(1,)):
@@ -105,11 +118,12 @@ if __name__ == "__main__":
     #temporal_transform = TemporalBeginCrop(opt.sample_duration)
     #temporal_transform = TemporalEndCrop(opt.sample_duration)
     target_transform = ClassLabel()
+    opt.n_val_samples = 1
     validation_data = get_validation_set(
         opt, spatial_transform, temporal_transform, target_transform)
     data_loader = torch.utils.data.DataLoader(
         validation_data,
-        batch_size=16,
+        batch_size=8,
         shuffle=False,
         num_workers=1,
         pin_memory=True)
@@ -131,12 +145,19 @@ if __name__ == "__main__":
     top1 = AverageMeter()
     top5 = AverageMeter()
 
+    y_true_y_pred = []
     end_time = time.time()
+    model = model.cuda()
     for i, (inputs, targets) in enumerate(data_loader):
         with torch.no_grad():
             outputs = model(inputs).data.cpu()
-        recorder.append(outputs.numpy().copy())
-        prec1, prec5 = calculate_accuracy(outputs, targets, topk=(1, 5))
+            probabilities = F.softmax(outputs, dim=1)
+        predicted_class = torch.argmax(probabilities, dim=1)
+
+        y_true_y_pred.append((targets.numpy(), predicted_class.numpy()))
+
+        recorder.append(probabilities.numpy().copy())
+        prec1, prec5 = calculate_accuracy(probabilities, targets, topk=(1, 5))
 
         top1.update(prec1, inputs.size(0))
         top5.update(prec5, inputs.size(0))
@@ -152,7 +173,9 @@ if __name__ == "__main__":
                   batch_time=batch_time,
                   top1=top1,
                   top5=top5))
+    print("prec@1 {:.5f} prec@5 {:.5f}".format(top1.avg * 100, top5.avg * 100))
 
+    save_predictions(y_true_y_pred)
     video_pred = [np.argmax(np.mean(x, axis=0)) for x in recorder]
     print(video_pred)
 
@@ -172,7 +195,7 @@ if __name__ == "__main__":
         output_csv.append('%s;%s'%(name_list[i],
                                    categories[video_pred[i]]))
 
-        with open('jester_17_predictions.csv','w') as f:
+        with open('jester_17_mbnet_predictions.csv','w') as f:
             f.write('\n'.join(output_csv))
 
 

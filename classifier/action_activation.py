@@ -1,6 +1,7 @@
 import numpy as np
 import time
 import torch
+import math
 
 from online.online_utils import Queue
 
@@ -39,7 +40,7 @@ class ActionActivator:
             self.average_gesture_duration = opts.average_gesture_duration / 4
         elif self.cumulative_method == "step":
             print("Using step accumulation")
-            self.average_gesture_duration = opts.average_gesture_duration / (4 * opts.skip_frames)
+            self.average_gesture_duration = math.floor(opts.average_gesture_duration / (4 * opts.skip_frames))
 
         # is a gesture currently detected
         self.active = False
@@ -52,7 +53,7 @@ class ActionActivator:
         self.previous_step_time = time.clock()
 
         # how many times has a contrast class appeared in succession
-        self.passive_count = 0
+        self.passive_count = opts.contrast_patience + 1
         self.contrast_class_indices = contrast_class_indices
         self.contrast_patience = opts.contrast_patience
 

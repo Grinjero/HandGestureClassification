@@ -44,6 +44,6 @@ class ActionClassifier:
             preds = F.softmax(preds, dim=1)
             preds = preds.cpu()
             preds = preds.detach()
-            preds = torch.squeeze(preds, dim=0)
+            preds = torch.unsqueeze(preds, dim=1)
 
         return preds

@@ -222,11 +222,11 @@ class ClassifiedClassVisualizer(ImageVisualizer):
         h, w, c = frame.shape
         x = w
         label = self.class_map[self.current_class_ind]
-        (label_width, label_height), baseline = cv2.getTextSize(label, fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=0.8, thickness=2)
+        (label_width, label_height), baseline = cv2.getTextSize(label, fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=1, thickness=2)
         x -= label_width
         color = get_class_color(self.color_map, self.current_class_ind, self.num_classes)
         color = (color[0], color[1], color[2], opacity)
-        cv2.putText(frame, label, (x, self.y_position), fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=0.8,
+        cv2.putText(frame, label, (x, self.y_position), fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=1,
                     color=color, thickness=2)
 
         if duration_since_activation > self.label_display_time:
