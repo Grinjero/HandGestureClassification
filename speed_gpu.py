@@ -12,7 +12,7 @@ from models import mobilenet, mobilenetv2
 # model = shufflenet.get_model(groups=3, width_mult=0.5, num_classes=600)#1
 # model = shufflenetv2.get_model( width_mult=0.25, num_classes=600, sample_size = 112)#2
 # model = mobilenet.get_model( width_mult=0.5, num_classes=600, sample_size = 112)#3
-# model = mobilenetv2.get_model( width_mult=0.2, num_classes=600, sample_size = 112)#4
+model = mobilenetv2.get_model( width_mult=0.2, num_classes=600, sample_size = 112)#4
 # model = shufflenet.get_model(groups=3, width_mult=1.0, num_classes=600)#5
 # model = shufflenetv2.get_model( width_mult=1.0, num_classes=600, sample_size = 112)#6
 # model = mobilenet.get_model( width_mult=1.0, num_classes=600, sample_size = 112)#7
@@ -29,7 +29,6 @@ from models import mobilenet, mobilenetv2
 # model = resnet.resnet18(sample_size = 112, sample_duration = 8, num_classes=600)
 # model = resnet.resnet50(sample_size = 112, sample_duration = 8, num_classes=600)
 # model = resnet.resnet101(sample_size = 112, sample_duration = 8, num_classes=600)
-model = resnext.resnext101(sample_size = 112, sample_duration = 8, num_classes=600)
 
 model = model.cuda()
 model = nn.DataParallel(model, device_ids=None)	

@@ -7,6 +7,8 @@ import torch
 import cv2
 import scipy.ndimage
 from PIL import Image, ImageOps
+from scipy import ndimage
+
 try:
     import accimage
 except ImportError:

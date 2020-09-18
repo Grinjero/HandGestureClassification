@@ -1,12 +1,13 @@
 import random
-import math
 import numbers
 import collections
 import numpy as np
 import torch
 import cv2
 import scipy.ndimage
-from PIL import Image, ImageOps
+from PIL import Image
+from scipy import ndimage
+
 try:
     import accimage
 except ImportError:

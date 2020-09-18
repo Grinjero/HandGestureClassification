@@ -10,19 +10,20 @@ from utils.video_manager import AsyncVideoManager
 
 from online.online_utils import FPSMeasurer
 from opts import parse_input, parse_model
-from online.online_opts import parse_source, parse_paths, parse_preprocessing, parse_online
+from online.online_opts import parse_source, parse_preprocessing, parse_online, parse_dataset
 
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parse_paths(parser)
     parse_preprocessing(parser)
     parse_model(parser)
     parse_input(parser)
     parse_source(parser)
     parse_online(parser)
-
-    return parser.parse_args()
+    parser.add_argument('--dataset_config', type=str, default="annotation_Jester\Jester.yaml", help="Path to the dataset config")
+    args = parser.parse_args()
+    parse_dataset(args)
+    return args
 
 
 def main():
@@ -77,7 +78,7 @@ def main():
         fps_measurer.operation_complete()
 
         classifier_state = {
-            "predictions": classifier,
+            "predictions": prediction,
             "fps": fps_measurer.fps()
         }
         video_visualizer.update_state(classifier_state)

@@ -1,7 +1,7 @@
 import torch
 from torch import nn
 
-from models import c3d, mobilenet, mobilenetv2, resnet, slow_mobilenetv2, fast_mobilenetv2, slow_fast_mobilenetv2
+from models import mobilenet, mobilenetv2, slow_mobilenetv2, fast_mobilenetv2, slow_fast_mobilenetv2
 
 
 def generate_model(opt):
@@ -9,13 +9,7 @@ def generate_model(opt):
                          'shufflenetv2', 'slow_mobilenetv2', 'fast_mobilenetv2', 'slow_fast_mobilenetv2']
 
 
-    if opt.model == 'c3d':
-        from models.c3d import get_fine_tuning_parameters
-        model = c3d.get_model(
-            num_classes=opt.n_classes,
-            sample_size=opt.sample_size,
-            sample_duration=opt.sample_duration)
-    elif opt.model == 'mobilenet':
+    if opt.model == 'mobilenet':
         from models.mobilenet import get_fine_tuning_parameters
         model = mobilenet.get_model(
             num_classes=opt.n_classes,
@@ -51,51 +45,6 @@ def generate_model(opt):
             slow_frames=opt.slow_frames,
             fast_frames=opt.fast_frames,
             lateral_connection_section_indices=opt.lateral_connection_section_indices)
-    elif opt.model == 'resnet':
-        assert opt.model_depth in [10, 18, 34, 50, 101, 152, 200]
-        from models.resnet import get_fine_tuning_parameters
-        if opt.model_depth == 10:
-            model = resnet.resnet10(
-                num_classes=opt.n_classes,
-                shortcut_type=opt.resnet_shortcut,
-                sample_size=opt.sample_size,
-                sample_duration=opt.sample_duration)
-        elif opt.model_depth == 18:
-            model = resnet.resnet18(
-                num_classes=opt.n_classes,
-                shortcut_type=opt.resnet_shortcut,
-                sample_size=opt.sample_size,
-                sample_duration=opt.sample_duration)
-        elif opt.model_depth == 34:
-            model = resnet.resnet34(
-                num_classes=opt.n_classes,
-                shortcut_type=opt.resnet_shortcut,
-                sample_size=opt.sample_size,
-                sample_duration=opt.sample_duration)
-        elif opt.model_depth == 50:
-            model = resnet.resnet50(
-                num_classes=opt.n_classes,
-                shortcut_type=opt.resnet_shortcut,
-                sample_size=opt.sample_size,
-                sample_duration=opt.sample_duration)
-        elif opt.model_depth == 101:
-            model = resnet.resnet101(
-                num_classes=opt.n_classes,
-                shortcut_type=opt.resnet_shortcut,
-                sample_size=opt.sample_size,
-                sample_duration=opt.sample_duration)
-        elif opt.model_depth == 152:
-            model = resnet.resnet152(
-                num_classes=opt.n_classes,
-                shortcut_type=opt.resnet_shortcut,
-                sample_size=opt.sample_size,
-                sample_duration=opt.sample_duration)
-        elif opt.model_depth == 200:
-            model = resnet.resnet200(
-                num_classes=opt.n_classes,
-                shortcut_type=opt.resnet_shortcut,
-                sample_size=opt.sample_size,
-                sample_duration=opt.sample_duration)
 
     if not opt.no_cuda:
         model = model.cuda()

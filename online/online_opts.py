@@ -12,6 +12,7 @@ def parse_dataset(args):
     args.contrast_class_indices = dataset_config["CONTRAST_CLASS_INDICES"]
     args.categories_path = dataset_config["CATEGORIES_PATH"]
     args.num_classes = dataset_config["NUM_CLASSES"]
+    args.n_classes = dataset_config["NUM_CLASSES"]
 
 
 def parse_preprocessing(parser):
