@@ -25,7 +25,7 @@ python utils/jester_json.py annotation_dir_path
 
 ## Running the code
 How to train and evaluate models examples can be seen in ```jupyter_notebooks\MbNet_SlowFast.ipynb```. 
-To turn of online inference press 'q'.
+To turn off online inference press 'q'.
  
 To run online inference with SlowFast from webcamera
 ```bash
