@@ -64,7 +64,7 @@ class SlowMobileNetV2(nn.Module):
     temporal changes in the early layers. Using temporal information in early layers
     would only lead to degradation of accuracy when observing fast movements since there
     is a large temporal distance between each frame (correlation between frames would only be possible
-    with very abstract features with large receptive fiels).
+    with very abstract features with large spatial receptive fields).
     """
     def __init__(self, num_classes=1000, sample_size=112, width_mult=1.):
         super(SlowMobileNetV2, self).__init__()

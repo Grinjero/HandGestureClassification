@@ -58,11 +58,10 @@ class InvertedResidual(nn.Module):
 
 class SlowFastMobileNetV2(nn.Module):
     """
-    In comparison to standard MobileNetV2 this network has has much larger temporal resolution (i.e. it receives a much
-    larger number of frames that are much closer to each other in time than in SlowMobileNetV2), but it also should have
-    a much smaller number of channels (width_mult = 0.2 by default).
-    Hopefully, this would force the network to only focus on temporal changes and not on details of each frame separately
-    (pure spatial information)
+    Combination of SlowMobileNetV2 and FastMobileNetV2, for more details refer to their files. Uses two "separate" pathways
+    with different temporal resolutions. Slow pathway uses the SlowMobileNetV2 as its pathway an receives every alpha-th
+    frame (in this work every 4-th frame), Fast pathway uses the FastMobileNetV2 as its pathway and uses every frame given
+    in the forward (16 frames). In both pathways no temporal downsampling is performed.
 
     width_mult_slow : float
         Width multiplier for the slow pathway

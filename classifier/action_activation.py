@@ -26,6 +26,7 @@ class ActionActivator:
         :param cumulative_method: timed for real time step measuring, step doesn't use real time, just counts classifier calls
         """
         self.output_queue = Queue(opts.output_queue_size)
+        self.det_queue = Queue(opts.output_queue_size)
         assert opts.filter_method in ["median", "mean", "exp"]
         self.filter_method = opts.filter_method
 
@@ -40,7 +41,7 @@ class ActionActivator:
             self.average_gesture_duration = opts.average_gesture_duration / 4
         elif self.cumulative_method == "step":
             print("Using step accumulation")
-            self.average_gesture_duration = math.floor(opts.average_gesture_duration / (4 * opts.skip_frames))
+            self.average_gesture_duration = math.floor(opts.average_gesture_duration / (4 * (opts.skip_frames + 1)))
 
         # is a gesture currently detected
         self.active = False
@@ -59,6 +60,7 @@ class ActionActivator:
 
         self.n_classes = opts.n_classes
         self.cum_sum = np.zeros(opts.n_classes)
+        self.weighted_probability = np.zeros(opts.n_classes)
         self.previous_best_idx = -1
 
 
@@ -97,7 +99,17 @@ class ActionActivator:
     def _postprocess(self, probabilities):
         top_class_index = np.argmax(probabilities)
 
-        if top_class_index not in self.contrast_class_indices:
+        self.contrast_probabilities = probabilities[self.contrast_class_indices]
+        self.det_queue.enqueue(self.contrast_probabilities)
+        if self.filter_method == "median":
+            self.contrast_probabilities = self.det_queue.median_filtering()
+        elif self.filter_method == "mean":
+            self.contrast_probabilities = self.det_queue.mean_filtering()
+        else:
+            self.contrast_probabilities = self.det_queue.exponential_average_filtering()
+        contrast_max_value = np.max(self.contrast_probabilities)
+
+        if top_class_index not in self.contrast_class_indices and contrast_max_value < probabilities[top_class_index]:
             self.output_queue.enqueue(probabilities)
             self.passive_count = 0
 
@@ -109,7 +121,7 @@ class ActionActivator:
                 self.filtered_probabilities = self.output_queue.exponential_average_filtering()
 
             max_probability = np.max(self.filtered_probabilities)
-            print(max_probability)
+            # print(max_probability)
         else:
             self.filtered_probabilities = np.zeros(len(probabilities))
             self.output_queue.enqueue(probabilities)
@@ -132,11 +144,14 @@ class ActionActivator:
         self.cum_sum /= np.array(self.duration_array).sum()
 
     def _calculate_stepped_cum_sum(self, current_step_index, probabilities):
-        print("step " + str(current_step_index))
-        self.cum_sum *= current_step_index - 1
+        # self.cum_sum *= current_step_index - 1
         self.weighted_probability = self._weighting_step_func(current_step_index) * probabilities
-        self.cum_sum += self.weighted_probability
-        self.cum_sum /= current_step_index
+        # self.cum_sum += self.weighted_probability
+        # self.cum_sum /= current_step_index
+        self.cum_sum = ((self.cum_sum * (current_step_index - 1)) + self.weighted_probability) / current_step_index
+
+        # # remove this
+        # self.cum_sum = self.weighted_probability
 
     def _calculate_cum_sum(self, current_step_time, probabilities):
         if self.cumulative_method == "timed":
@@ -171,9 +186,6 @@ class ActionActivator:
             self.active_index += 1
             self._calculate_cum_sum(current_step_time, probabilities)
 
-            print("Weighted probability max {}".format(np.max(self.weighted_probability)))
-            print("Cum sum max {}".format(np.max(self.cum_sum)))
-
             best2_idx, best1_idx = self.cum_sum.argsort()[-2:]
             if (self.cum_sum[best1_idx] - self.cum_sum[best2_idx]) > self.early_threshold:
                 self.finished_prediction = True
@@ -189,18 +201,18 @@ class ActionActivator:
 
         if self.finished_prediction:
             best_idx = self.cum_sum.argmax()
-
-            if self.early_predict:
-                if best_idx != self.previous_best_idx and self.cum_sum[best_idx] > self.late_threshold:
-                    print("Early detection: class {} prob {:.5f}".format(best_idx, self.cum_sum[best_idx]))
-                    activated_class = best_idx
-            elif self.cum_sum[best_idx] > self.late_threshold:
-                if best_idx == self.previous_best_idx:
-                    print("Late detection: class {} prob {:.5f}".format(best_idx, self.cum_sum[best_idx]))
-                    activated_class = best_idx
+            if self.cum_sum[best_idx] > self.late_threshold:
+                if self.early_predict:
+                    if best_idx != self.previous_best_idx and self.cum_sum[best_idx] > self.late_threshold:
+                        print("Early detection: class {} prob {:.5f}".format(best_idx, self.cum_sum[best_idx]))
+                        activated_class = best_idx
                 else:
-                    print("Late detection: class {} prob {:.5f}".format(best_idx, self.cum_sum[best_idx]))
-                    activated_class = best_idx
+                    if best_idx == self.previous_best_idx:
+                        print("Late detection: class {} prob {:.5f}".format(best_idx, self.cum_sum[best_idx]))
+                        activated_class = best_idx
+                    else:
+                        print("Late detection: class {} prob {:.5f}".format(best_idx, self.cum_sum[best_idx]))
+                        activated_class = best_idx
 
                 self.previous_best_idx = best_idx
                 self.finished_prediction = False

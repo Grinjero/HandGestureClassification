@@ -15,7 +15,11 @@ from utils.utils import load_value_file
 """
 set the VOLUME_SPLITS to indicate where each volume starts (vol_0=[0, VOLUME_SPLITS[0] - 1], 
 vol_1=[VOLUME_SPLITS[0], [VOLUME_SPLITS[1] - 1], ..., [VOLUME_SPLITS[-1], end_of_dataset]
-This could appease collab
+This is made to appease colab, since it doesn't like to work with directories with too many 
+files in them
+
+Dataset doesn't need to be volumed to be used, a check is performed to see how many files are located
+in the given dataset directory
 """
 VOLUME_SPLITS = [20000, 40000, 60000, 80000, 100000, 120000]
 

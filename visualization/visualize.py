@@ -78,9 +78,7 @@ def main():
         Scale(112),
         CenterCrop(112),
     ])
-    # TODO: otkrit zašto ima sivi border kad je scale isti kao center crop
-    # shvatit zašto ne vata nikakve druge geste osim no gesture i doing something else
-    # stream_camera_flow(spatial_transforms)
+
     stream_camera_rgb(spatial_transforms)
 
 if __name__ == "__main__":

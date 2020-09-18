@@ -7,7 +7,7 @@ from torch.autograd import Variable
 import pdb
 
 from utils.utils import AverageMeter, calculate_accuracy
-from models import squeezenet, shufflenetv2, shufflenet, mobilenet, mobilenetv2, c3d, resnet, resnext
+from models import mobilenet, mobilenetv2
 
 # model = shufflenet.get_model(groups=3, width_mult=0.5, num_classes=600)#1
 # model = shufflenetv2.get_model( width_mult=0.25, num_classes=600, sample_size = 112)#2

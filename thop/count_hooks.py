@@ -7,7 +7,6 @@ multiply_adds = 1
 
 
 def count_conv2d(m, x, y):
-	# TODO: add support for pad and dilation
 	x = x[0]
 
 	cin = m.in_channels
@@ -35,7 +34,6 @@ def count_conv2d(m, x, y):
 
 
 def count_conv3d(m, x, y):
-	# TODO: add support for pad and dilation
 	x = x[0]
 
 	cin = m.in_channels
@@ -115,7 +113,6 @@ def count_avgpool(m, x, y):
 
 
 def count_linear(m, x, y):
-	# per output element
 	total_mul = m.in_features
 	total_add = m.in_features - 1
 	num_elements = y.numel()

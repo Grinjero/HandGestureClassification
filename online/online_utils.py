@@ -83,7 +83,7 @@ class FPSMeasurer:
 
     def _update_avg_duration(self, op_duration):
         self._last_duration = op_duration
-        self._avg_duration = 0.98 * self._avg_duration + 0.02 * op_duration
+        self._avg_duration = 0.8 * self._avg_duration + 0.2 * op_duration
 
     def _update_avg_fps(self):
         time_now = time.monotonic_ns()

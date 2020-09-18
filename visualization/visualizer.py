@@ -20,7 +20,7 @@ def get_class_color(color_map, class_id, num_classes):
 
 
 class SyncVideoVisualizer:
-    def __init__(self, image_visualizers, display_spatial_transforms=None):
+    def __init__(self, image_visualizers, display_spatial_transforms=None, output_file=None):
         """
         :param image_visualizers: List of image visualizers that will draw on the input image (be careful that they
         don't draw over each other)
@@ -42,7 +42,7 @@ class SyncVideoVisualizer:
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
             return False
-        return True
+        return frame
 
     def _draw_visualizers(self, frame):
         for image_visualizer in self.image_visualizers:

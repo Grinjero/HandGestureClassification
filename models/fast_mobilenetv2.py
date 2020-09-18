@@ -66,6 +66,7 @@ class FastMobileNetV2(nn.Module):
     a much smaller number of channels (width_mult = 0.2 by default).
     Hopefully, this would force the network to only focus on temporal changes and not on details of each frame separately
     (pure spatial information)
+    Also no temporal downsampling is performed
     """
     def __init__(self, num_classes=1000, sample_size=112, width_mult=0.2):
         super(FastMobileNetV2, self).__init__()

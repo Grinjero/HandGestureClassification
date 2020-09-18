@@ -26,6 +26,7 @@ def parse_args():
     parse_model(parser)
     parse_input(parser)
 
+    parser.add_argument('--output_file', type=str, default="", help='Leave empty for no output video')
     parser.add_argument('--plot', action="store_true", default=False, help="Plotting in real time")
     parser.add_argument('--dataset_config', type=str, default="annotation_Jester\Jester.yaml", help="Path to the dataset config")
     args = parser.parse_args()
@@ -62,7 +63,7 @@ def main():
         raise ValueError("Invalid source")
 
     if opts.plot:
-        plotter = ResultPlotter(opts.n_classes, prediction_names=("Predikcije", "Filtrirane", "Otežane"),
+        plotter = ResultPlotter(opts.n_classes, prediction_names=("Konstrastne klase", "Predikcije", "Filtrirane", "Otežane", "Cumulative sum"),
                                 x_size=100)
 
     topK_visualizer = TopKVisualizer(class_map,
@@ -78,6 +79,16 @@ def main():
     ])
     video_visualizer = SyncVideoVisualizer(image_visualizers, display_spatial_transforms)
     activation_processing = ActionActivator(opts, opts.contrast_class_indices)
+
+    if opts.output_file:
+        video_capturer.capture_stream()
+        frame = video_capturer.read_frame()
+        disp_frame = display_spatial_transforms(frame)
+        h, w, c = disp_frame.shape
+        fourcc = cv2.VideoWriter_fourcc(*'XVID')
+        video_name = opts.output_file
+        video_path = "result_videos/" + video_name +".avi"
+        out = cv2.VideoWriter(video_path, fourcc, 12, (w, h))
 
     fps_display_measurer = FPSMeasurer()
     fps_model_measurer = FPSMeasurer()
@@ -97,16 +108,22 @@ def main():
 
             if opts.plot:
                 plotter({
+                    "Konstrastne klase": activation_processing.contrast_probabilities,
                     "Predikcije": prediction,
                     "Filtrirane": activation_processing.filtered_probabilities,
-                    "Otežane": activation_processing.weighted_probability
+                    "Otežane": activation_processing.weighted_probability,
+                    "Cumulative sum" : activation_processing.cum_sum
                 }, activated_class)
 
         frame = video_capturer.read_frame()
-        if video_visualizer.display(frame) is False:
+        result_frame = video_visualizer.display(frame)
+        if result_frame is False:
             # not really intuitive but the kill switch of the program is in the visualizer
             # by pressing q
             break
+
+        if opts.output_file:
+            out.write(result_frame)
 
         fps_display_measurer.operation_complete()
         fps_display_visualizer.update_fps(fps_display_measurer.fps())
