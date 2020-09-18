@@ -120,7 +120,7 @@ python online_inference_single_activations.py \
 --filter_method median \
 --early_threshold 0.60 \
 --late_threshold 0.15 \
---cumulative_method step
+--cumulative_method step \
 --plot \
 video \
 --video_path  sample_videos/sample_17_jester.avi
