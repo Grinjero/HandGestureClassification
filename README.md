@@ -127,13 +127,31 @@ video \
 ```
 
 ## Citation
-Parts of the code are from the github repository of the article:
+Code is build upon github repositories of articles:
 
 ```bibtex
-@article{kopuklu2019resource,
-  title={Resource Efficient 3D Convolutional Neural Networks},
-  author={K{\"o}p{\"u}kl{\"u}, Okan and Kose, Neslihan and Gunduz, Ahmet and Rigoll, Gerhard},
-  journal={arXiv preprint arXiv:1904.02422},
-  year={2019}
+@article{DBLP:journals/corr/abs-1904-02422,
+  author    = {Okan Köpüklü} and
+               Neslihan Kose and
+               Ahmet Gunduz and
+               Gerhard Rigoll},
+  title     = {Resource Efficient 3D Convolutional Neural Networks},
+  journal   = {CoRR},
+  volume    = {abs/1904.02422},
+  year      = {2019},
+  url       = {http://arxiv.org/abs/1904.02422}
+}
+```
+```bibtext
+@article{DBLP:journals/corr/abs-1901-10323,
+  author    = {Okan Köpüklü} and
+               Ahmet Gunduz and
+               Neslihan Kose and
+               Gerhard Rigoll},
+  title     = {Real-time Hand Gesture Detection and Classification Using Convolutional
+               Neural Networks},
+  journal   = {CoRR},
+  volume    = {abs/1901.10323},
+  year      = {2019}
 }
 ```
