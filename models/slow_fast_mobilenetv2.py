@@ -355,11 +355,11 @@ if __name__ == "__main__":
 
     time_start = time.perf_counter()
     with torch.no_grad():
-        for i in range(0, 100):
+        for i in range(0, 1000):
             output = model(input_var)
 
     duration = time.perf_counter() - time_start
     print("\n\nOutput shape " + str(output.shape) + "\n\n")
-    avg_execution_time = duration / 100
+    avg_execution_time = duration / 1000
     avg_fps = 1 / avg_execution_time
     print("Duration {}, Average execution time {}, Average FPS {}".format(duration, avg_execution_time, avg_fps))

@@ -1,9 +1,13 @@
 # Hand gesture recognition
-Hand gesture recognition based on https://github.com/okankop/Efficient-3DCNNs
+Hand gesture recognition from RGB videos based on https://github.com/okankop/Efficient-3DCNNs <br>
+3D CNNs are used, namely, a 3D version of MobileNetV2 and a SlowFast model whose fast and slow pathways 
+consist of modified MobileNetV2 networks. Each model is described in more detail in its corresponding 
+file in the ``models`` folder. <br>
 
 ## Models
-Used models can be downloaded [here](https://drive.google.com/drive/folders/1SoPDD3dnrDaj9lWn0mxvpRD4OLyD9mls?usp=sharing)
-
+Trained models can be downloaded [here](https://drive.google.com/drive/folders/1SoPDD3dnrDaj9lWn0mxvpRD4OLyD9mls?usp=sharing)
+<br>Models are trained to recognize a subset of 17 gestures from the Jester dataset. 
+Full list of gesture can be found in ``annotation_Jester\classInd_17_classes.txt``.
 
 ## Dataset Preparation
 
@@ -24,10 +28,12 @@ python utils/jester_json.py annotation_dir_path
 ```
 
 ## Running the code
-How to train and evaluate models examples can be seen in ```jupyter_notebooks\MbNet_SlowFast.ipynb```. 
+Examples for model training and evaluation can be seen in ```jupyter_notebooks\MbNet_SlowFast.ipynb```. 
 To turn off online inference press 'q'.
+
+Inference in action can be seen in the ``result_videos`` folder.
  
-To run online inference with SlowFast from webcamera
+Run online inference with SlowFast from webcamera:
 ```bash
 python online_inference_single_activations.py \
 --model_path model_params/jester17_slow_fast_mobilenetv2_0.2x_RGB_16_best.pth \
@@ -54,7 +60,7 @@ python online_inference_single_activations.py \
 camera
 ```
 
-To run online inference with SlowFast on video
+Run online inference with SlowFast on video:
 ```bash
 python online_inference_single_activations.py \
 --model_path model_params/jester17_slow_fast_mobilenetv2_0.2x_RGB_16_best.pth \
@@ -83,7 +89,7 @@ video
 sample_videos/sample_17_jester.avi
 ```
 
-To run online inference with MBNetV2 from webcamera
+Run online inference with MBNetV2 from webcamera:
 ```bash
 python online_inference_single_activations.py \
 --model mobilenetv2 \
@@ -104,7 +110,7 @@ python online_inference_single_activations.py \
 --output_file camera_result \
 camera
 ```
-To run online inference with MBNetV2 from video
+Run online inference with MBNetV2 from video:
 ```bash
 python online_inference_single_activations.py \
 --model mobilenetv2 \
@@ -118,13 +124,22 @@ python online_inference_single_activations.py \
 --average_gesture_duration 12 \
 --output_queue_size 4 \
 --filter_method median \
---early_threshold 0.60 \
---late_threshold 0.15 \
+--early_threshold 0.4 \
+--late_threshold 0.10 \
 --cumulative_method step \
 --plot \
 video \
 --video_path  sample_videos/sample_17_jester.avi
 ```
+
+## Results
+
+|         Model        | Number of parameters | MFLOPs | Forward pass frequency | Accuracy |
+|:--------------------:|:--------------------:|:------:|:----------------------:|:--------:|
+|      MobileNetV2     |         2.38M        |   444  |           24           |   95.05  |
+| SlowFast MobileNetV2 |         2.5M         |   478  |           16           |   95.56  |
+
+Speed measured on a NVIDIA GeForce GTX 1650 graphics card.
 
 ## Citation
 Code is build upon github repositories of articles:

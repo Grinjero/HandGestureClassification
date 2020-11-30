@@ -259,3 +259,4 @@ fabric.properties
 results/
 runs/
 model_params/
+/models/resnet_test.py
