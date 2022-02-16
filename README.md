@@ -3,6 +3,7 @@ Hand gesture recognition from RGB videos based on https://github.com/okankop/Eff
 3D CNNs are used, namely, a 3D version of MobileNetV2 and a SlowFast model whose fast and slow pathways 
 consist of modified MobileNetV2 networks. Each model is described in more detail in its corresponding 
 file in the ``models`` folder. <br>
+Check out the ``results_folder`` for examples of models in action.
 
 ## Models
 Trained models can be downloaded [here](https://drive.google.com/drive/folders/1SoPDD3dnrDaj9lWn0mxvpRD4OLyD9mls?usp=sharing)
